@@ -40,8 +40,7 @@ int main ()
   /*************************************************************/
   /* Allow socket descriptor to be reuseable                   */
   /*************************************************************/
-  rc = setsockopt(listen_sd, SOL_SOCKET,  SO_REUSEADDR,
-                  (char *)&on, sizeof(on));
+  rc = setsockopt(listen_sd, SOL_SOCKET,  SO_REUSEADDR, (char *)&on, sizeof(on));
   if (rc < 0)
   {
     perror("setsockopt() failed");
@@ -256,6 +255,7 @@ int main ()
 
           /*****************************************************/
           /* Data was received                                 */
+          /* Parsing changes                                   */
           /*****************************************************/
           len = rc;
           printf("  %d bytes received\n", len);
