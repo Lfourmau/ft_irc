@@ -27,6 +27,8 @@ int main( int argc, char **argv) {
 	int yes = 1;
 	if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes)) == -1)
 		std::cerr << "Error: setsockopt() fail\n";
+	if (fcntl(sockfd, F_SETFL, O_NONBLOCK) == -1)
+		std::cerr << "Error: fcntl() fail\n";
 
 
 }
