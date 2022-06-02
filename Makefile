@@ -1,6 +1,11 @@
 NAME = server
 
-SRCS = server.cpp
+INC = 	server.hpp \
+		channel.hpp
+
+SRCS = 	main.cpp \
+		channel.cpp \
+		server.cpp
 
 OBJS = $(SRCS:.cpp=.o)
 
