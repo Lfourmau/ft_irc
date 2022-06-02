@@ -30,3 +30,9 @@
 *.exe
 *.out
 *.app
+
+# Best editor
+*.swp
+
+# Debug symbols
+*.dSYM
