@@ -193,6 +193,7 @@ int main ()
 					add_connect.fd = new_sd;
 					add_connect.events = POLLIN;
 					fds.push_back(add_connect);
+					my_serv.addUser(new_sd);
 
 					/*****************************************************/
 					/* Loop back up and accept another incoming          */
@@ -253,7 +254,7 @@ int main ()
 					len = rc;
 					printf("  %d bytes received\n", len);
 					//parse instead of echo data to the client
-					my_serv.parsing(buffer);
+					my_serv.parsing(buffer, fds[i].fd);
 					/*****************************************************/
 					/* Echo the data back to the client                  */
 					/*****************************************************/

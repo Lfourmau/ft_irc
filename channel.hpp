@@ -12,18 +12,22 @@
 #include <sys/time.h>
 #include <netinet/in.h>
 #include <errno.h>
-
+#include "user.hpp"
 class channel
 {
 	public:
 		channel(std::string id, std::string password = NULL) : name(id), key(password) {};
+		channel() : name("NULL") {};
 		~channel() {};
 		std::string getName() {return name;};
 		std::string getKey() {return key;};
+		bool memberExists(user member);
+		int	addMember(user member);
 
 	private:
-		std::string name;
-		std::string key;
+		std::string			name;
+		std::string			key;
+		std::vector<user> 	members;
 		//int 		mode;
 };
 

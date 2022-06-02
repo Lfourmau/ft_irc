@@ -1,6 +1,6 @@
 #include "server.hpp"
 
-int server::parsing(std::string toparse)
+int server::parsing(std::string toparse, int userFd)
 {
 	std::vector<std::string> strings;
     std::istringstream stream(toparse);
@@ -9,7 +9,7 @@ int server::parsing(std::string toparse)
         strings.push_back(word);
 
 	if (!strings[0].compare("/join"))
-		join_channel(strings[1], strings[2]);
+		join_channel(strings[1], strings[2], userFd);
 	return 0;
 }
 
@@ -24,31 +24,77 @@ bool server::channelExists(std::string chan)
 	
 }
 
-void server::createChannel(std::string name, std::string key)
+void server::createChannel(std::string name, std::string key, int userFd)
 {
 	channel toCreate(name, key);
+	toCreate.addMember(findUser(userFd));
 	channels.push_back(toCreate);
 	printChannels();
 }
 
-int server::join_channel(std::string name, std::string key)
+int server::join_channel(std::string name, std::string key, int userFd)
 {
 	if (channelExists(name))
-		std::cout << "channel exists" << std::endl;
+		findChannel(name).addMember(findUser(userFd));
 	else
-		createChannel(name, key);
+		createChannel(name, key, userFd);
+	return 0;
+}
+
+bool server::userExists(int fd)
+{
+	for (size_t i = 0; i < this->users.size(); i++)
+	{
+		if (fd == this->users[i].getFd())
+			return true;
+	}
+	return false;
+}
+
+int server::addUser(int fd)
+{
+	if (userExists(fd))
+		std::cout << "user already connected" << std::endl;
+	else
+	{
+		user toAdd(fd);
+		this->users.push_back(toAdd);
+		printUsers();
+	}
 	return 0;
 }
 
 
-
-
+channel server::findChannel(std::string name)
+{
+	for (size_t i = 0; i < this->channels.size(); i++)
+	{
+		if (channels[i].getName() == name)
+			return channels[i];
+	}
+	//don't know how return because if i call this function, the channel exists
+	return (channel(NULL));
+}
+user server::findUser(int userFd)
+{
+	for (size_t i = 0; i < users.size(); i++)
+	{
+		if (users[i].getFd() == userFd)
+			return users[i];
+	}
+	//don't know how return because if i call this function, the user exists
+	return (users[0]);
+}
 //UTILS
 void server::printChannels()
 {
 	for (size_t i = 0; i < channels.size(); i++)
-	{
-		std::cout << channels[i].getName() << std::endl;
-	}
+		std::cout << "Channel--> " << channels[i].getName() << std::endl;
+	
+}
+void server::printUsers()
+{
+	for (size_t i = 0; i < users.size(); i++)
+		std::cout << "User--> " << users[i].getFd() << std::endl;
 	
 }
