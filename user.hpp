@@ -3,6 +3,7 @@
 
 #include "channel.hpp"
 #include "server.hpp"
+class channel;
 
 class user
 {
@@ -10,6 +11,7 @@ class user
 		user(int sock) : fd(sock) {};
 		~user() {};
 		int	const &getFd() const {return fd;};
+		channel *currentChan;
 
 	private:
 		int fd;

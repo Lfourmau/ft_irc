@@ -4,8 +4,9 @@
 #include "channel.hpp"
 #include "user.hpp"
 #include <sstream>
-class channel;
+
 class user;
+class channel;
 
 class server
 {
@@ -15,7 +16,8 @@ class server
 
 		void	printChannels();
 		void	printUsers();
-		int 	parsing(std::string toparse, int userFd);
+		int 	send_message(std::string msg, int userFd);
+		int 	parsing(char *input, int userFd);
 		void 	createChannel(std::string name, std::string key, int userFd);
 		bool 	channelExists(std::string chan);
 		int 	join_channel(std::string name, std::string key, int userFd);

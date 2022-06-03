@@ -1,13 +1,15 @@
 #include "server.hpp"
 
-int server::parsing(std::string toparse, int userFd)
+int server::parsing(char *input, int userFd)
 {
+	std::string toparse(input);
+	if (toparse[0] != '/')
+		send_message(toparse, userFd);
 	std::vector<std::string> strings;
     std::istringstream stream(toparse);
     std::string word;    
     while (getline(stream, word, ' '))
         strings.push_back(word);
-
 	if (!strings[0].compare("/join"))
 		join_channel(strings[1], strings[2], userFd);
 	printChannels();
@@ -20,6 +22,7 @@ int server::join_channel(std::string name, std::string key, int userFd)
 		findChannel(name).addMember(findUser(userFd));
 	else
 		createChannel(name, key, userFd);
+	findUser(userFd).currentChan = &findChannel(name);
 	findChannel(name).printMembers();
 	return 0;
 }
@@ -43,6 +46,19 @@ int server::addUser(int fd)
 		this->users.push_back(toAdd);
 	}
 	printUsers();
+	return 0;
+}
+
+int server::send_message(std::string msg, int userFd)
+{
+	for (size_t i = 0; i < findUser(userFd).currentChan->members.size(); i++)
+	{
+		if (send(findUser(userFd).currentChan->members[i].getFd(), &msg, msg.length(), 0) < 0)
+		{
+			perror("  send() failed");
+			break;
+		}
+	}
 	return 0;
 }
 

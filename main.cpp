@@ -225,6 +225,7 @@ int main ()
 					/* failure occurs, we will close the                 */
 					/* connection.                                       */
 					/*****************************************************/
+					memset(buffer, 0, 80);
 					rc = recv(fds[i].fd, buffer, sizeof(buffer), 0);
 					if (rc < 0)
 					{
@@ -258,13 +259,13 @@ int main ()
 					/*****************************************************/
 					/* Echo the data back to the client                  */
 					/*****************************************************/
-					rc = send(fds[i].fd, buffer, len, 0);
-					if (rc < 0)
-					{
-						perror("  send() failed");
-						close_conn = true;
-						break;
-					}
+					//rc = send(fds[i].fd, buffer, len, 0);
+					//if (rc < 0)
+					//{
+					//	perror("  send() failed");
+					//	close_conn = true;
+					//	break;
+					//}
 				}
 
 			/*******************************************************/

@@ -13,6 +13,7 @@
 #include <netinet/in.h>
 #include <errno.h>
 #include "user.hpp"
+
 class channel
 {
 	public:
@@ -24,11 +25,12 @@ class channel
 		bool 		memberExists(user member);
 		int			addMember(user member);
 		void 		printMembers();
+		std::vector<user> 	members;
+
 	private:
 		std::string			name;
 		std::string			key;
 		//int 		mode;
-		std::vector<user> 	members;
 };
 
 #endif
