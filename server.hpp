@@ -21,8 +21,8 @@ class server
 		int 	join_channel(std::string name, std::string key, int userFd);
 		bool 	userExists(int fd);
 		int		addUser(int fd);
-		channel findChannel(std::string name);
-		user 	findUser(int userFd);
+		channel &findChannel(std::string name);
+		user 	&findUser(int userFd);
 
 	private:
 		//int port;

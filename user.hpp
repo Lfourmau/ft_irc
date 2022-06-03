@@ -9,7 +9,7 @@ class user
 	public:
 		user(int sock) : fd(sock) {};
 		~user() {};
-		int	getFd() {return fd;};
+		int	const &getFd() const {return fd;};
 
 	private:
 		int fd;

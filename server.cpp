@@ -10,9 +10,52 @@ int server::parsing(std::string toparse, int userFd)
 
 	if (!strings[0].compare("/join"))
 		join_channel(strings[1], strings[2], userFd);
+	printChannels();
 	return 0;
 }
 
+int server::join_channel(std::string name, std::string key, int userFd)
+{
+	if (channelExists(name))
+		findChannel(name).addMember(findUser(userFd));
+	else
+		createChannel(name, key, userFd);
+	findChannel(name).printMembers();
+	return 0;
+}
+
+void server::createChannel(std::string name, std::string key, int userFd)
+{
+	channel toCreate(name, key);
+	toCreate.addMember(findUser(userFd));
+	channels.push_back(toCreate);
+}
+
+
+
+int server::addUser(int fd)
+{
+	if (userExists(fd))
+		std::cout << "user already connected" << std::endl;
+	else
+	{
+		user toAdd(fd);
+		this->users.push_back(toAdd);
+	}
+	printUsers();
+	return 0;
+}
+
+//EXISTS
+bool server::userExists(int fd)
+{
+	for (size_t i = 0; i < this->users.size(); i++)
+	{
+		if (fd == this->users[i].getFd())
+			return true;
+	}
+	return false;
+}
 bool server::channelExists(std::string chan)
 {
 	for (size_t i = 0; i < this->channels.size(); i++)
@@ -24,48 +67,8 @@ bool server::channelExists(std::string chan)
 	
 }
 
-void server::createChannel(std::string name, std::string key, int userFd)
-{
-	channel toCreate(name, key);
-	toCreate.addMember(findUser(userFd));
-	channels.push_back(toCreate);
-	printChannels();
-}
-
-int server::join_channel(std::string name, std::string key, int userFd)
-{
-	if (channelExists(name))
-		findChannel(name).addMember(findUser(userFd));
-	else
-		createChannel(name, key, userFd);
-	return 0;
-}
-
-bool server::userExists(int fd)
-{
-	for (size_t i = 0; i < this->users.size(); i++)
-	{
-		if (fd == this->users[i].getFd())
-			return true;
-	}
-	return false;
-}
-
-int server::addUser(int fd)
-{
-	if (userExists(fd))
-		std::cout << "user already connected" << std::endl;
-	else
-	{
-		user toAdd(fd);
-		this->users.push_back(toAdd);
-		printUsers();
-	}
-	return 0;
-}
-
-
-channel server::findChannel(std::string name)
+//FINDS
+channel& server::findChannel(std::string name)
 {
 	for (size_t i = 0; i < this->channels.size(); i++)
 	{
@@ -73,9 +76,9 @@ channel server::findChannel(std::string name)
 			return channels[i];
 	}
 	//don't know how return because if i call this function, the channel exists
-	return (channel(NULL));
+	return (channels[0]);
 }
-user server::findUser(int userFd)
+user& server::findUser(int userFd)
 {
 	for (size_t i = 0; i < users.size(); i++)
 	{
@@ -85,6 +88,8 @@ user server::findUser(int userFd)
 	//don't know how return because if i call this function, the user exists
 	return (users[0]);
 }
+
+
 //UTILS
 void server::printChannels()
 {
