@@ -11,12 +11,13 @@ int server::parsing(char *input, int userFd)
     while (getline(stream, word, ' '))
         strings.push_back(word);
 	if (!strings[0].compare("/join"))
-		join_channel(strings[1], strings[2], userFd);
+		join_channel(userFd, strings[1], strings[2]);
+		
 	printChannels();
 	return 0;
 }
 
-int server::join_channel(std::string name, std::string key, int userFd)
+int server::join_channel(int userFd, std::string name, std::string key)
 {
 	if (channelExists(name))
 		findChannel(name).addMember(findUser(userFd));
@@ -51,6 +52,8 @@ int server::addUser(int fd)
 
 int server::send_message(std::string msg, int userFd)
 {
+	char nl = '\n';
+	char *nealine = &nl;
 	for (size_t i = 0; i < findUser(userFd).currentChan->members.size(); i++)
 	{
 		if (send(findUser(userFd).currentChan->members[i].getFd(), &msg, msg.length(), 0) < 0)
@@ -58,6 +61,7 @@ int server::send_message(std::string msg, int userFd)
 			perror("  send() failed");
 			break;
 		}
+		send(findUser(userFd).currentChan->members[i].getFd(), nealine, 1, 0);
 	}
 	return 0;
 }

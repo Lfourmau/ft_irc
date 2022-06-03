@@ -20,7 +20,7 @@ class server
 		int 	parsing(char *input, int userFd);
 		void 	createChannel(std::string name, std::string key, int userFd);
 		bool 	channelExists(std::string chan);
-		int 	join_channel(std::string name, std::string key, int userFd);
+		int 	join_channel(int userFd, std::string name, std::string key);
 		bool 	userExists(int fd);
 		int		addUser(int fd);
 		channel &findChannel(std::string name);
