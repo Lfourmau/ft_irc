@@ -1,151 +1,68 @@
-#include <iostream>
-#include <arpa/inet.h> // htons, htonl, ntohs, ntohl, inet_addr
-#include <sys/socket.h> // socket
-#include <cstring> // memset c++ version
-#include <poll.h>
-#include <cerrno>
-#include <unistd.h>
-#include <fcntl.h>
+#include "server.hpp"
 
-# define MYPORT 4242
-# define BACKLOG 64
-# define MAX_CONNECTIONS 1024
-# define BUFFER_SIZE 80
+Server::Server() : fds_(), listening_socket_(), address_info_() {}
 
-int main( int argc, char **argv) {
-	(void)argc;
-	(void)argv;
+Server::~Server() { this->fds_.clear() }
 
-	bool compress_array = false;
-	char buffer[BUFFER_SIZE];
-	int len;
-	int sockfd;
-	struct	sockaddr_in6	my_addr;
-	memset(&my_addr, 0, sizeof(my_addr));
+void	Server::launch() {
 
-	sockfd = socket(AF_INET6, SOCK_STREAM, 0); // AF_INET: ipv4 only; AF_INET6: ipv4 and 6
-	if (sockfd == -1)
+	bool end_server = false;
+	
+	open_server_connection();
+	while (end_server == false) {
+		try {
+			polling();
+			iterate_through_fds();
+		}
+		catch (std::exception& e) {
+			std::cerr << e.what() << std::endl;
+			end_server = true;
+		}
+
+	}
+}
+
+void	Server::open_server_connection() {
+
+	this->listening_socket_ = socket(AF_INET6, SOCK_STREAM, 0); // AF_INET: ipv4 only; AF_INET6: ipv4 and 6
+	if (this->listening_socket_ == -1)
 		std::cerr << "Error: socket() fail\n";
 	std::cout << "sockfd: " << sockfd << std::endl;
 
-	my_addr.sin6_family = AF_INET6;
-	my_addr.sin6_port = htons(MYPORT);
-	my_addr.sin6_addr = in6addr_any; // global variable
+	this->address_info_.sin6_family = AF_INET6;
+	this->address_info_.sin6_port = htons(MYPORT);
+	this->address_info_.sin6_addr = in6addr_any; // global variable
 
-	if (bind(sockfd, (struct sockaddr*)&my_addr, sizeof(struct sockaddr_in6)) == -1)
+	if (bind(this->listening_socket_, (struct sockaddr*)&this->address_info_, sizeof(this->address_info_)) == -1)
 		std::cerr << "Error: bind() fail\n";
 	int yes = 1;
-	if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes)) == -1)
+	if (setsockopt(this->listening_socket_, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes)) == -1)
 		std::cerr << "Error: setsockopt() fail\n";
-	if (fcntl(sockfd, F_SETFL, O_NONBLOCK) == -1)
+	if (fcntl(this->listening_socket_, F_SETFL, O_NONBLOCK) == -1)
 		std::cerr << "Error: fcntl() fail\n";
-	if (listen(sockfd, BACKLOG) == -1)	
+	if (listen(this->listening_socket_, BACKLOG) == -1)	
 		std::cerr << "Error: listen() fail\n";
-
-	struct pollfd fds[MAX_CONNECTIONS];
-	int	nfds = 1;
-	memset(fds, 0, sizeof(fds));
-	fds[0].fd = sockfd;
-	fds[0].events = POLLIN;
-
-	int timeout = (3 * 60 * 1000);
-	int	return_check;
 	
-	bool end_server = false;
-	int current_size = 0;
-	int close_connection;
-	while (end_server == false) {
-		std::cout << "waiting on poll()...\n";
-		return_check = poll(fds, nfds, timeout);
-		if (return_check == -1) {
-			std::cerr << "Error: poll() fail\n";
-			break;
-		}
-		else if (return_check == 0) {
-			std::cerr << " poll() timed out. End of program.\n";
-			break;
-		}
-		current_size = nfds;
-		for (int i = 0; i < current_size; ++i) {
-			if (fds[i].revents == 0)
-				continue;
-			if (fds[i].revents != POLLIN) {
-				std::cerr << "Error! revents = " << fds[i].revents << std::endl;
-				end_server = true;
-				break;
-			}
-			if (fds[i].fd == sockfd) { // adding all pending connections to list of FDs
-				std::cout << "Listening socket is readable\n";
-				int new_sd = 0;
-				while (new_sd != -1) {
-					new_sd = accept(sockfd, NULL, NULL);
-					if (new_sd < 0) {
-						if (errno != EWOULDBLOCK) {
-							std::cerr << " accept() failed\n";
-							end_server = true;
-						}
-						break;
-					}
-					std::cout << "New incoming connection - " << new_sd << std::endl;
-					fds[nfds].fd = new_sd;
-					fds[nfds].events = POLLIN;
-					++nfds;
-				}
-			}
-			else { // not the listening (server) socket
-				std::cout << "Descriptor" << fds[i].fd << " is readable\n";
-				close_connection = false;
-				while (true) {
-					memset(buffer, 0, BUFFER_SIZE);
-					return_check = recv(fds[i].fd, buffer, sizeof(buffer), 0);
-					if (return_check == -1) {
-						if (errno != EWOULDBLOCK) {
-							std::cerr << "recv() failed\n";
-							close_connection = true;
-						}
-						break;
-					}
-					if (return_check == 0) {
-						std::cout << "Connection closed\n";
-						close_connection = true;
-						break;
-					}
-					len = return_check;
-					std::cout << len << " bytes received\n";
-					// echo back to the client
-					return_check = send(fds[i].fd, buffer, len, 0);
-					if (return_check == -1) {
-						std::cerr << "send() failed\n";
-						close_connection = true;
-						break;
-					}
-				}
+	struct pollfd initial_listening;
+	initial_listening.fd = this->listening_socket_;
+	initial_listening.events = POLLIN;
+	this->fds_.push_back(initial_listening);
+}
 
-				if (close_connection) {
-					close(fds[i].fd);
-					fds[i].fd = -1;
-					compress_array = true;
-				}
+void	Server::polling() {
+	int ret;
+	ret = poll(this->fds.data(), this->fds.size(), TIMEOUT);
+	if (ret == -1)
+		throw ServerException("Error: poll() fail");
+	else if (ret == 0)
+		throw ServerException("poll() timed out. End of program.");
+}
 
-			} // end of existing connection
-		} // end of loop through poll
+void	Server::iterate_through_fds() { 
+	for (std::vector<struct pollfd>::iterator it = fds_.begin(); it != fds_.end(); ++it){
+		if (it->revents == 0)
+			continue;
+		if (it->revents != POLLIN)
 
-		if (compress_array) {
-			compress_array = false;
-			for (int i = 0; i < nfds; ++i) {
-				if (fds[i].fd == -1) {
-					for (int j = i; j < nfds; ++j)
-						fds[j].fd = fds[j+1].fd;
-					--i;
-					--nfds;
-				}
-			}
-		}
-	} // end of server running
-	
-	// clean up all open sockets
-	for (int i = 0; i < nfds; ++i) {
-		if (fds[i].fd >= 0)
-			close(fds[i].fd);
 	}
 }
