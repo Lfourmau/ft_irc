@@ -23,7 +23,6 @@ class user
 				command.erase(0, command.find('\n', 0) + 1);
 				command += cmd;
 			}
-			std::cout << ";" << command << ";" << std::endl;
 		};
 		std::string getCommand() { return command; };
 		char buff[80];

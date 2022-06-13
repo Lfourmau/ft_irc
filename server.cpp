@@ -2,7 +2,7 @@
 
 int server::parsing(std::string toparse, int userFd)
 {
-	if (toparse[0] != '/')
+	if (toparse[0] != '/' && findUser(userFd).getCommand().find('\n', 0) != std::string::npos)
 		send_message(toparse, userFd);
 	std::vector<std::string> strings;
     std::istringstream stream(toparse);
