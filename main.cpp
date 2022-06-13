@@ -10,7 +10,7 @@ int main ()
 	int    listen_sd = -1, new_sd = -1;
 	bool   end_server = false, compress_array = false;
 	int    close_conn;
-	char   buffer[80];
+	//char   buffer[80];
 	struct sockaddr_in6   addr;
 	vector<struct pollfd> fds;
 	int    timeout;
@@ -225,8 +225,8 @@ int main ()
 					/* failure occurs, we will close the                 */
 					/* connection.                                       */
 					/*****************************************************/
-					memset(buffer, 0, 80);
-					rc = recv(fds[i].fd, buffer, sizeof(buffer), 0);
+					memset(my_serv.findUser(fds[i].fd).buff, 0, 80);
+					rc = recv(fds[i].fd, my_serv.findUser(fds[i].fd).buff, sizeof(my_serv.findUser(fds[i].fd).buff), 0);
 					if (rc < 0)
 					{
 						if (errno != EWOULDBLOCK)
@@ -255,7 +255,8 @@ int main ()
 					len = rc;
 					printf("  %d bytes received\n", len);
 					//parse instead of echo data to the client
-					my_serv.parsing(buffer, fds[i].fd);
+					my_serv.findUser(fds[i].fd).setCommand(my_serv.findUser(fds[i].fd).buff);
+					my_serv.parsing(my_serv.findUser(fds[i].fd).getCommand(), fds[i].fd);
 					/*****************************************************/
 					/* Echo the data back to the client                  */
 					/*****************************************************/

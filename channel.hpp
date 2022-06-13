@@ -20,17 +20,17 @@ class channel
 		channel(std::string id, std::string password = NULL) : name(id), key(password) {};
 		channel() : name("NULL") {};
 		~channel() {};
-		std::string const &getName() const {return name;};
-		std::string const &getKey() const {return key;};
-		bool 		memberExists(user member);
-		int			addMember(user member);
-		void 		printMembers();
+		std::string const 	&getName() const {return name;};
+		std::string const 	&getKey() const {return key;};
+		bool 				memberExists(user member);
+		int					addMember(user member);
+		void 				printMembers();
 		std::vector<user> 	members;
 
 	private:
 		std::string			name;
 		std::string			key;
-		//int 		mode;
+		//mode 		chan_mode
 };
 
 #endif

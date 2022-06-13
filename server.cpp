@@ -1,8 +1,7 @@
 #include "server.hpp"
 
-int server::parsing(char *input, int userFd)
+int server::parsing(std::string toparse, int userFd)
 {
-	std::string toparse(input);
 	if (toparse[0] != '/')
 		send_message(toparse, userFd);
 	std::vector<std::string> strings;
@@ -56,7 +55,7 @@ int server::send_message(std::string msg, int userFd)
 	char *nealine = &nl;
 	for (size_t i = 0; i < findUser(userFd).currentChan->members.size(); i++)
 	{
-		if (send(findUser(userFd).currentChan->members[i].getFd(), &msg, msg.length(), 0) < 0)
+		if (send(findUser(userFd).currentChan->members[i].getFd(), msg.data(), msg.length(), 0) < 0)
 		{
 			perror("  send() failed");
 			break;

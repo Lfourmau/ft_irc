@@ -5,6 +5,12 @@
 #include "user.hpp"
 #include <sstream>
 
+enum mode
+{
+	INVITE_ONLY,
+	OTHER_MODE,
+};
+
 class user;
 class channel;
 
@@ -17,7 +23,7 @@ class server
 		void	printChannels();
 		void	printUsers();
 		int 	send_message(std::string msg, int userFd);
-		int 	parsing(char *input, int userFd);
+		int 	parsing(std::string toparse, int userFd);
 		void 	createChannel(std::string name, std::string key, int userFd);
 		bool 	channelExists(std::string chan);
 		int 	join_channel(int userFd, std::string name, std::string key);
