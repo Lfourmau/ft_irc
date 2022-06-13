@@ -1,8 +1,14 @@
 #include "server.hpp"
 
-Server::Server() : fds_(), listening_socket_(), address_info_() {}
+Server::Server() : fds_(), listening_socket_(), address_info_(), compress_array_(false) {}
 
-Server::~Server() { this->fds_.clear() }
+Server::~Server() {
+	for (std::vector<struct pollfd>::iterator it = this->fds_.begin(); it != this->fds_.end(); ++it) {
+		if (it->fd >= 0)
+			close(it->fd);
+	}
+	this->fds_.clear();
+}
 
 void	Server::launch() {
 
@@ -13,6 +19,7 @@ void	Server::launch() {
 		try {
 			polling();
 			iterate_through_fds();
+			compress_array_if_needed();
 		}
 		catch (std::exception& e) {
 			std::cerr << e.what() << std::endl;
@@ -27,7 +34,7 @@ void	Server::open_server_connection() {
 	this->listening_socket_ = socket(AF_INET6, SOCK_STREAM, 0); // AF_INET: ipv4 only; AF_INET6: ipv4 and 6
 	if (this->listening_socket_ == -1)
 		std::cerr << "Error: socket() fail\n";
-	std::cout << "sockfd: " << sockfd << std::endl;
+	std::cout << "listening socket: " << this->listening_socket_ << std::endl;
 
 	this->address_info_.sin6_family = AF_INET6;
 	this->address_info_.sin6_port = htons(MYPORT);
@@ -51,7 +58,7 @@ void	Server::open_server_connection() {
 
 void	Server::polling() {
 	int ret;
-	ret = poll(this->fds.data(), this->fds.size(), TIMEOUT);
+	ret = poll(this->fds_.data(), this->fds_.size(), TIMEOUT);
 	if (ret == -1)
 		throw ServerException("Error: poll() fail");
 	else if (ret == 0)
@@ -59,10 +66,84 @@ void	Server::polling() {
 }
 
 void	Server::iterate_through_fds() { 
-	for (std::vector<struct pollfd>::iterator it = fds_.begin(); it != fds_.end(); ++it){
-		if (it->revents == 0)
+	for (size_t i = 0; i < this->fds_.size(); ++i){
+		if (this->fds_[i].revents == 0)
 			continue;
-		if (it->revents != POLLIN)
+		if (this->fds_[i].revents != POLLIN)
+			throw ServerException("Error revents");
+		if (this->fds_[i].fd == this->listening_socket_)
+			adding_pending_connections();
+		else
+			receive_and_send_data(i);
+	}
+}
 
+void	Server::adding_pending_connections() {
+	 // adding all pending connections to list of FDs
+	std::cout << "Listening socket is readable\n";
+	int new_sd = 0;
+	struct pollfd new_pollfd;
+	while (new_sd != -1) {
+		new_sd = accept(this->listening_socket_, NULL, NULL);
+		if (new_sd < 0) {
+			if (errno != EWOULDBLOCK)
+				throw ServerException("accept() failed");
+			break;
+		}
+		std::cout << "New incoming connection - " << new_sd << std::endl;
+		new_pollfd.fd = new_sd;
+		new_pollfd.events = POLLIN;
+		this->fds_.push_back(new_pollfd);
+	}
+}
+
+void	Server::receive_and_send_data( size_t connection_index ) {
+	std::cout << "Descriptor" << this->fds_[connection_index].fd << " is readable\n";
+	bool close_connection = false;
+	char	buffer[BUFFER_SIZE];
+	int		return_check;
+	int		len;
+	while (true) {
+		memset(buffer, 0, BUFFER_SIZE);
+		return_check = recv(this->fds_[connection_index].fd, buffer, sizeof(buffer), 0);
+		if (return_check == -1) {
+			if (errno != EWOULDBLOCK) {
+				this->fds_[connection_index].fd = TO_BE_CLOSED;
+				this->compress_array_ = true;
+				throw ServerException("recv() failed");
+			}
+			break;
+		}
+		if (return_check == 0) {
+			std::cout << "Connection closed\n";
+			this->fds_[connection_index].fd = TO_BE_CLOSED;
+			this->compress_array_ = true;
+			break;
+		}
+		len = return_check;
+		std::cout << len << " bytes received\n";
+		// echo back to the client
+		return_check = send(this->fds_[connection_index].fd, buffer, len, 0);
+		if (return_check == -1) {
+			std::cerr << "send() failed\n";
+			this->fds_[connection_index].fd = TO_BE_CLOSED;
+			this->compress_array_ = true;
+			throw ServerException("send() failed");
+		}
+	}
+	if (close_connection) {
+		close(this->fds_[connection_index].fd);
+		this->fds_[connection_index].fd = TO_BE_CLOSED;
+		this->compress_array_ = true;
+	}
+}
+
+void	Server::compress_array_if_needed() {
+	if (this->compress_array_) {
+		this->compress_array_ = false;
+		for (std::vector<struct pollfd>::iterator it = this->fds_.begin(); it != this->fds_.end(); ++it) {
+			if (it->fd == TO_BE_CLOSED)
+				this->fds_.erase(it);
+		}
 	}
 }

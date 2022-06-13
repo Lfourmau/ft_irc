@@ -36,3 +36,5 @@
 
 # Debug symbols
 *.dSYM
+ircserv
+main_doc_ibm.cpp
