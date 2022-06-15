@@ -3,7 +3,7 @@ CPPFLAGS = -std=c++98 -I . -Wall -Werror -Wextra -g3 #-fsanitize=address
 
 NAME = ircserv
 
-SRCS = server.cpp
+SRCS = server_lowlevel.cpp channel.cpp user.cpp server.cpp
 
 HEADERS = $(OBJS:.cpp=.hpp)
 

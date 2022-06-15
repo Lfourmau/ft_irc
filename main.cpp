@@ -1,7 +1,7 @@
-#include "server.hpp"
+#include "server_lowlevel.hpp"
 
 int main(void) {
-	Server my_serv;
+	Server_lowlevel my_serv;
 
 	my_serv.launch();
 
