@@ -1,7 +1,7 @@
 #include "channel.hpp"
 #include "server.hpp"
 
-#define SERVER_PORT  12345
+#define SERVER_PORT  6667
 using namespace std;
 
 int main ()
@@ -164,6 +164,9 @@ int main ()
 				/* queued up on the listening socket before we         */
 				/* loop back and call poll again.                      */
 				/*******************************************************/
+				sockaddr_in client_addr;
+				client_addr.sin_family = AF_INET;
+				socklen_t addr_len = sizeof(client_addr);
 				do
 				{
 					/*****************************************************/
@@ -173,7 +176,7 @@ int main ()
 					/* failure on accept will cause us to end the        */
 					/* server.                                           */
 					/*****************************************************/
-					new_sd = accept(listen_sd, NULL, NULL);
+					new_sd = accept(listen_sd, (sockaddr *)&client_addr.sin_addr, &addr_len);
 					if (new_sd < 0)
 					{
 						if (errno != EWOULDBLOCK)
@@ -193,7 +196,7 @@ int main ()
 					add_connect.fd = new_sd;
 					add_connect.events = POLLIN;
 					fds.push_back(add_connect);
-					my_serv.addUser(new_sd);
+					my_serv.addUser(new_sd, client_addr);
 
 					/*****************************************************/
 					/* Loop back up and accept another incoming          */
@@ -227,6 +230,7 @@ int main ()
 					/*****************************************************/
 					memset(my_serv.findUser(fds[i].fd).buff, 0, 80);
 					rc = recv(fds[i].fd, my_serv.findUser(fds[i].fd).buff, sizeof(my_serv.findUser(fds[i].fd).buff), 0);
+					std::cout << "{" << my_serv.findUser(fds[i].fd).buff << "}" << std::endl;
 					if (rc < 0)
 					{
 						if (errno != EWOULDBLOCK)

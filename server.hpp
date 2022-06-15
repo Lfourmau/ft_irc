@@ -28,7 +28,7 @@ class server
 		bool 	channelExists(std::string chan);
 		int 	join_channel(int userFd, std::string name, std::string key);
 		bool 	userExists(int fd);
-		int		addUser(int fd);
+		int		addUser(int fd, sockaddr_in &addr);
 		channel &findChannel(std::string name);
 		user 	&findUser(int userFd);
 

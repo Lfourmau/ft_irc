@@ -2,16 +2,28 @@
 
 int server::parsing(std::string toparse, int userFd)
 {
-	if (toparse[0] != '/' && findUser(userFd).getCommand().find('\n', 0) != std::string::npos)
-		send_message(toparse, userFd);
+	toparse.erase(toparse.find("\r\n"), 2);
 	std::vector<std::string> strings;
     std::istringstream stream(toparse);
-    std::string word;    
+    std::string word;
     while (getline(stream, word, ' '))
         strings.push_back(word);
-	if (!strings[0].compare("/join"))
+	if (!strings[0].compare("JOIN"))
 		join_channel(userFd, strings[1], strings[2]);
+	else if (!strings[0].compare("NICK"))
+		findUser(userFd).setNickname(strings[1]);
+	else if (!strings[0].compare("USER"))
+		findUser(userFd).my_register(strings);
+	else if (findUser(userFd).getCommand().find('\n', 0) != std::string::npos)
+		send_message(toparse, userFd);
 		
+	if (!findUser(userFd).getNickname().empty() && !findUser(userFd).getUsername().empty())
+	{
+		std::string end("CAP END");
+		send(userFd, end.data(), end.length(), 0);
+		std::string welcome(":localhost 001 " + findUser(userFd).getNickname() + " :Welcome to the Internet Relay Network " + findUser(userFd).getNickname());
+		send(userFd, welcome.data(), welcome.length(), 0);
+	}
 	printChannels();
 	return 0;
 }
@@ -36,13 +48,14 @@ void server::createChannel(std::string name, std::string key, int userFd)
 
 
 
-int server::addUser(int fd)
+int server::addUser(int fd, sockaddr_in &addr)
 {
 	if (userExists(fd))
 		std::cout << "user already connected" << std::endl;
 	else
 	{
 		user toAdd(fd);
+		toAdd.setHostname(addr);
 		this->users.push_back(toAdd);
 	}
 	printUsers();

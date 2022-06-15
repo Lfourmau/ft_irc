@@ -12,7 +12,10 @@
 #include <sys/time.h>
 #include <netinet/in.h>
 #include <errno.h>
+#include <arpa/inet.h>
 #include "user.hpp"
+
+class user;
 
 class channel
 {
