@@ -2,21 +2,29 @@
 
 int server::parsing(std::string toparse, int userFd)
 {
-	toparse.erase(toparse.find("\r\n"), 2);
-	std::vector<std::string> strings;
-    std::istringstream stream(toparse);
-    std::string word;
-    while (getline(stream, word, ' '))
-        strings.push_back(word);
-	if (!strings[0].compare("JOIN"))
-		join_channel(userFd, strings[1], strings[2]);
-	else if (!strings[0].compare("NICK"))
-		findUser(userFd).setNickname(strings[1]);
-	else if (!strings[0].compare("USER"))
-		findUser(userFd).my_register(strings);
-	else if (findUser(userFd).getCommand().find('\n', 0) != std::string::npos)
-		send_message(toparse, userFd);
-		
+	size_t sep = toparse.find("\r\n");
+
+	while (sep != std::string::npos)
+	{
+		std::string cmd(toparse.begin(), toparse.begin() + sep);
+		std::cout << "CMD = " << cmd << "**" << std::endl;
+		std::vector<std::string> strings;
+		std::istringstream stream(cmd);
+		std::string word;
+		while (getline(stream, word, ' '))
+			strings.push_back(word);
+		if (!strings[0].compare("JOIN"))
+			join_channel(userFd, strings[1], strings[2]);
+		else if (!strings[0].compare("NICK"))
+			findUser(userFd).setNickname(strings[1]);
+		else if (!strings[0].compare("USER"))
+			findUser(userFd).my_register(strings);
+		//else if (findUser(userFd).getCommand().find('\n', 0) != std::string::npos)
+		//	send_message(cmd, userFd);
+		toparse.erase(toparse.begin(), toparse.begin() + sep + 2);
+		sep = toparse.find("\r\n", sep + 1);
+		std::cout << "TOPARSE == " << toparse << "**" << std::endl;
+	}
 	if (!findUser(userFd).getNickname().empty() && !findUser(userFd).getUsername().empty() && findUser(userFd).is_connected == 0)
 	{
 		//std::string end("CAP END\n");
