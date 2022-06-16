@@ -45,6 +45,9 @@ int server::join_channel(int userFd, std::string name, std::string key)
 	else
 		createChannel(name, key, userFd);
 	findUser(userFd).currentChan = &findChannel(name);
+	std::string msg(":" + findUser(userFd).getNickname() + " JOIN " + name + "\n");
+	std::cout << "MSG --> " << msg << "**" << std::endl;
+	send(userFd, msg.data(), msg.length(), 0);
 	findChannel(name).printMembers();
 	return 0;
 }
