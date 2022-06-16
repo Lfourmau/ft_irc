@@ -8,7 +8,7 @@ class channel;
 class user
 {
 	public:
-		user(int sock) : fd(sock), command(), nickname() { memset(buff, 0, 80); };
+		user(int sock) : is_connected(0), fd(sock), command(), nickname() { memset(buff, 0, 80); };
 		~user() {};
 
 		channel *currentChan;
@@ -23,7 +23,7 @@ class user
 		void 		setCommand(char *buff);
 		void 		setNickname(std::string nick);
 		void 		setHostname(sockaddr_in &addr);
-
+		int is_connected;
 		int	my_register(std::vector<std::string> &strings);
 	private:
 		int fd;

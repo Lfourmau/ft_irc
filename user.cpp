@@ -4,10 +4,16 @@ void user::setNickname(std::string nick)
 {
 	if (this->nickname.empty())
 	{
+		std::string msg(":*!~" + this->username + "@" + this->hostname + " NICK " + ":" + nick + "\n");
 		this->nickname = nick;
+		if (send(this->fd, msg.data(), msg.length(), 0) < 0)
+		{
+			perror("  send() failed");
+			return ;
+		}
 		return;
 	}
-	std::string msg(":" + this->nickname + "!~" + this->username + "@" + this->hostname + " NICK " + ":" + nick);
+	std::string msg(":" + this->nickname + "!~" + this->username + "@" + this->hostname + " NICK " + ":" + nick + "\n");
 	this->nickname = nick;
 	if (send(this->fd, msg.data(), msg.length(), 0) < 0)
 	{
@@ -29,11 +35,11 @@ void user::setCommand(char *buff)
 {
 	std::string cmd(buff);
 
-	if (command.find('\n', 0) == std::string::npos)
+	if (command.find("\r\n", 0) == std::string::npos)
 		command += cmd;
 	else
 	{
-		command.erase(0, command.find('\n', 0) + 1);
+		command.erase(0, command.find("\r\n", 0) + 2);
 		command += cmd;
 	}
 };

@@ -17,12 +17,14 @@ int server::parsing(std::string toparse, int userFd)
 	else if (findUser(userFd).getCommand().find('\n', 0) != std::string::npos)
 		send_message(toparse, userFd);
 		
-	if (!findUser(userFd).getNickname().empty() && !findUser(userFd).getUsername().empty())
+	if (!findUser(userFd).getNickname().empty() && !findUser(userFd).getUsername().empty() && findUser(userFd).is_connected == 0)
 	{
-		std::string end("CAP END");
-		send(userFd, end.data(), end.length(), 0);
-		std::string welcome(":localhost 001 " + findUser(userFd).getNickname() + " :Welcome to the Internet Relay Network " + findUser(userFd).getNickname());
+		//std::string end("CAP END\n");
+		//send(userFd, end.data(), end.length(), 0);
+		std::string welcome(":10.1.8.2 001 " + findUser(userFd).getNickname() + " :Welcome to the Internet Relay Network " + findUser(userFd).getNickname() + "\n");
+		std::cout << "Welcome sent --> [" << welcome.data() << "]" << std::endl;
 		send(userFd, welcome.data(), welcome.length(), 0);
+		findUser(userFd).is_connected = 1;
 	}
 	printChannels();
 	return 0;
