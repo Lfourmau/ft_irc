@@ -22,7 +22,7 @@ class user
 		std::string get_nickname();
 		std::string get_hostname();
 	
-		void 		set_command(char *buff);
+		int 		set_command(char *buff);
 		int 		set_nickname(std::string nick);
 		int			init_nickname(std::string nick);
 		void 		set_hostname(sockaddr_in &addr);

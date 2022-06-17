@@ -10,7 +10,6 @@ int main ()
 	int    listen_sd = -1, new_sd = -1;
 	bool   end_server = false, compress_array = false;
 	int    close_conn;
-	//char   buffer[80];
 	struct sockaddr_in6   addr;
 	vector<struct pollfd> fds;
 	int    timeout;
@@ -259,8 +258,9 @@ int main ()
 					len = rc;
 					printf("  %d bytes received\n", len);
 					//parse instead of echo data to the client
-					my_serv.find_user(fds[i].fd).set_command(my_serv.find_user(fds[i].fd).buff);
-					my_serv.parsing(my_serv.find_user(fds[i].fd).get_command(), fds[i].fd);
+					if (my_serv.find_user(fds[i].fd).set_command(my_serv.find_user(fds[i].fd).buff))
+						my_serv.parsing(my_serv.find_user(fds[i].fd).get_command(), fds[i].fd);
+		
 					/*****************************************************/
 					/* Echo the data back to the client                  */
 					/*****************************************************/

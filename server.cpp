@@ -6,7 +6,7 @@
 int server::parsing(std::string toparse, int userFd)
 {
 	size_t sep = toparse.find("\r\n");
-
+	std::cout << "Need to be parsed : " << toparse << "**" << std::endl;
 	while (sep != std::string::npos)
 	{
 		std::string cmd(toparse.begin(), toparse.begin() + sep);
@@ -21,10 +21,10 @@ int server::parsing(std::string toparse, int userFd)
 			find_user(userFd).set_nickname(strings[1]);
 		else if (!strings[0].compare("USER"))
 			find_user(userFd).my_register(strings);
-		//else if (find_user(userFd).getCommand().find('\n', 0) != std::string::npos)
-		//	send_message(cmd, userFd);
+		else if (!strings[0].compare("PRIVMSG"))
+			send_message(userFd, strings);
 		toparse.erase(toparse.begin(), toparse.begin() + sep + 2);
-		sep = toparse.find("\r\n", sep + 1);
+		sep = toparse.find("\r\n", sep + 2);
 	}
 	if (send_welcome(userFd) < 0)
 		return 1;
@@ -42,7 +42,8 @@ int server::join_channel(int userFd, std::string name, std::string key)
 	else
 		create_channel(name, key, userFd);
 	std::string msg(":" + find_user(userFd).get_nickname() + " JOIN " + name + "\n");
-	send(userFd, msg.data(), msg.length(), 0);
+	send_join_alert(msg, name);
+	//send(userFd, msg.data(), msg.length(), 0);
 	//findChannel(name).printMembers();
 	return 0;
 }
@@ -122,18 +123,20 @@ user& server::find_user(int userFd)
 /*******************************************************/
 /* SEND FUNCTIONS                                      */
 /*******************************************************/
-int server::send_message(std::string msg, int userFd)
+int server::send_message(int userFd, std::vector<std::string> &strings)
 {
-	char nl = '\n';
-	char *nealine = &nl;
-	for (size_t i = 0; i < find_user(userFd).currentChan->members.size(); i++)
+	int ret;
+	std::string msg(":" + find_user(userFd).get_nickname() + "!~" + find_user(userFd).get_username() + "@" + find_user(userFd).get_hostname() + " PRIVMSG " + strings[1] + " " + strings[2] + "\n");
+	std::cout << "[[[" << msg << "]]]" << std::endl;
+	for (size_t i = 0; i < find_channel(strings[1]).members.size(); i++)
 	{
-		if (send(find_user(userFd).currentChan->members[i].get_fd(), msg.data(), msg.length(), 0) < 0)
+		if (find_channel(strings[1]).members[i].get_fd() != userFd)
+			ret = send(find_channel(strings[1]).members[i].get_fd(), msg.data(), msg.length(), 0);
+		if (ret < 0)
 		{
 			perror("  send() failed");
-			break;
+			return ret;
 		}
-		send(find_user(userFd).currentChan->members[i].get_fd(), nealine, 1, 0);
 	}
 	return 0;
 }
@@ -146,8 +149,15 @@ int server::send_welcome(int userFd)
 			return (-1);
 		find_user(userFd).is_connected = 1;
 	}
-	std::cout << "IRC FINIS" << std::endl;
 	return (1);
+}
+int server::send_join_alert(std::string msg, std::string name)
+{
+	for (size_t i = 0; i < find_channel(name).members.size(); i++)
+	{
+		send(find_channel(name).members[i].get_fd(), msg.data(), msg.length(), 0);
+	}
+	return 0;
 }
 
 

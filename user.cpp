@@ -32,17 +32,26 @@ int user::my_register(std::vector<std::string> &strings)
 	return 0;
 }
 
-void user::set_command(char *buff)
+int user::set_command(char *buff)
 {
 	std::string cmd(buff);
 
-	if (command.find("\r\n", 0) == std::string::npos)
+	if (command.find_last_of("\r\n") == std::string::npos)
+	{
 		command += cmd;
+		if (command.find_last_of("\r\n", 0))
+			return 1;
+		return 0;
+	}
 	else
 	{
-		command.erase(0, command.find("\r\n", 0) + 2);
+		command.erase(0, command.find_last_of("\r\n") + 2);
 		command += cmd;
+		if (command.find_last_of("\r\n") == std::string::npos)
+			return 0;
+		return 1;
 	}
+
 };
 
 void user::set_hostname(sockaddr_in &addr)

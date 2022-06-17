@@ -41,8 +41,9 @@ class server
 		int			add_user(int fd, sockaddr_in &addr);
 		channel 	&find_channel(std::string name);
 		user 		&find_user(int userFd);
-		int 		send_message(std::string msg, int userFd);
+		int 		send_message(int userFd, std::vector<std::string> &cmd);
 		int			send_welcome(int userFd);
+		int			send_join_alert(std::string msg, std::string name);
 		std::string get_ip();
 		void		print_channels();
 		void		print_users();
