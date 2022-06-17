@@ -141,13 +141,20 @@ int server::send_welcome(int userFd)
 {
 	if (!find_user(userFd).get_nickname().empty() && !find_user(userFd).get_username().empty() && find_user(userFd).is_connected == 0)
 	{
-		std::string welcome(":10.1.8.2 001 " + find_user(userFd).get_nickname() + " :Welcome to the Ctaleb, Ncatrien and Lfourmau network,  " + find_user(userFd).get_nickname() + "!\n");
+		std::string welcome(":" + get_ip() + RPL_WELCOME + find_user(userFd).get_nickname() + " :Welcome to the Ctaleb, Ncatrien and Lfourmau network,  " + find_user(userFd).get_nickname() + "!\n");
 		if (send(userFd, welcome.data(), welcome.length(), 0) < 0)
 			return (-1);
 		find_user(userFd).is_connected = 1;
 	}
+	std::cout << "IRC FINIS" << std::endl;
 	return (1);
 }
+
+
+/*******************************************************/
+/* GETTERS                       			           */
+/*******************************************************/
+std::string server::get_ip() { return this->ip; }
 
 
 /*******************************************************/

@@ -1,18 +1,7 @@
 #ifndef CHANNEL_HPP
 # define CHANNEL_HPP
 
-#include <stdio.h>
-#include <vector>
-#include <iostream>
-#include <unistd.h>
-#include <stdlib.h>
-#include <sys/ioctl.h>
-#include <sys/poll.h>
-#include <sys/socket.h>
-#include <sys/time.h>
-#include <netinet/in.h>
-#include <errno.h>
-#include <arpa/inet.h>
+#include "server.hpp"
 #include "user.hpp"
 
 class user;
