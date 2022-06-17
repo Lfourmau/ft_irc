@@ -23,11 +23,11 @@ class channel
 		channel(std::string id, std::string password = NULL) : name(id), key(password) {};
 		channel() : name("NULL") {};
 		~channel() {};
-		std::string const 	&getName() const {return name;};
-		std::string const 	&getKey() const {return key;};
-		bool 				memberExists(user member);
-		int					addMember(user member);
-		void 				printMembers();
+		std::string const 	&get_name() const {return name;};
+		std::string const 	&get_key() const {return key;};
+		bool 				member_exists(user member);
+		int					add_member(user member);
+		void 				print_members();
 		std::vector<user> 	members;
 
 	private:

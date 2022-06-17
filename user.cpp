@@ -1,37 +1,38 @@
 #include "user.hpp"
 
-void user::setNickname(std::string nick)
+int user::init_nickname(std::string nick)
+{
+	std::string msg(":*!~" + this->username + "@" + this->hostname + " NICK " + ":" + nick + "\n");
+	this->nickname = nick;
+	if (send(this->fd, msg.data(), msg.length(), 0) < 0)
+	{
+		perror("  send() failed");
+		return -1;
+	}
+	return 0;
+}
+int user::set_nickname(std::string nick)
 {
 	if (this->nickname.empty())
-	{
-		std::string msg(":*!~" + this->username + "@" + this->hostname + " NICK " + ":" + nick + "\n");
-		this->nickname = nick;
-		if (send(this->fd, msg.data(), msg.length(), 0) < 0)
-		{
-			perror("  send() failed");
-			return ;
-		}
-		return;
-	}
+		return (init_nickname(nick));
 	std::string msg(":" + this->nickname + "!~" + this->username + "@" + this->hostname + " NICK " + ":" + nick + "\n");
 	this->nickname = nick;
 	if (send(this->fd, msg.data(), msg.length(), 0) < 0)
 	{
 		perror("  send() failed");
-		return ;
+		return -1;
 	}
-	std::cout << "SetNickname called." << std::endl;
+	return 0;
 }
 
 int user::my_register(std::vector<std::string> &strings)
 {
 	this->username = strings[1];
 	this->realname = strings[4];
-	std::cout << "Register called" << std::endl;
 	return 0;
 }
 
-void user::setCommand(char *buff)
+void user::set_command(char *buff)
 {
 	std::string cmd(buff);
 
@@ -44,14 +45,16 @@ void user::setCommand(char *buff)
 	}
 };
 
-void user::setHostname(sockaddr_in &addr)
+void user::set_hostname(sockaddr_in &addr)
 {
 	this->hostname = inet_ntoa(addr.sin_addr);
 	std::cout << this->hostname << std::endl;
 }
 
-//Getters
-std::string user::getUsername() { return this->username; }
-std::string user::getRealname() { return this->realname; }
-std::string user::getNickname() { return this->nickname; }
-std::string user::getHostname() { return this->hostname; }
+/*******************************************************/
+/* GETTERS 		                                       */
+/*******************************************************/
+std::string user::get_username() { return this->username; }
+std::string user::get_realname() { return this->realname; }
+std::string user::get_nickname() { return this->nickname; }
+std::string user::get_hostname() { return this->hostname; }

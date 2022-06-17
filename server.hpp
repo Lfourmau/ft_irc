@@ -20,17 +20,18 @@ class server
 		server(std::string key = NULL) : password(key) {};
 		~server() {};
 
-		void	printChannels();
-		void	printUsers();
+		void	print_channels();
+		void	print_users();
 		int 	send_message(std::string msg, int userFd);
 		int 	parsing(std::string toparse, int userFd);
-		void 	createChannel(std::string name, std::string key, int userFd);
-		bool 	channelExists(std::string chan);
+		void 	create_channel(std::string name, std::string key, int userFd);
+		bool 	channel_exists(std::string chan);
 		int 	join_channel(int userFd, std::string name, std::string key);
-		bool 	userExists(int fd);
-		int		addUser(int fd, sockaddr_in &addr);
-		channel &findChannel(std::string name);
-		user 	&findUser(int userFd);
+		bool 	user_exists(int fd);
+		int		add_user(int fd, sockaddr_in &addr);
+		channel &find_channel(std::string name);
+		user 	&find_user(int userFd);
+		int		send_welcome(int userFd);
 
 	private:
 		//int port;

@@ -14,17 +14,20 @@ class user
 		channel *currentChan;
 		char buff[80];
 
-		int	const 	&getFd() const {return fd;};
-		std::string getCommand() { return command; };
-		std::string getUsername();
-		std::string getRealname();
-		std::string getNickname();
-		std::string getHostname();
-		void 		setCommand(char *buff);
-		void 		setNickname(std::string nick);
-		void 		setHostname(sockaddr_in &addr);
-		int is_connected;
-		int	my_register(std::vector<std::string> &strings);
+		int	const 	&get_fd() const {return fd;};
+		std::string get_command() { return command; };
+		std::string get_username();
+		std::string get_realname();
+		std::string get_nickname();
+		std::string get_hostname();
+	
+		void 		set_command(char *buff);
+		int 		set_nickname(std::string nick);
+		int			init_nickname(std::string nick);
+		void 		set_hostname(sockaddr_in &addr);
+		int			my_register(std::vector<std::string> &strings);
+		int 		is_connected;
+
 	private:
 		int fd;
 		std::string command;

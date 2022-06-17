@@ -1,18 +1,18 @@
 #include "channel.hpp"
 
-bool channel::memberExists(user member)
+bool channel::member_exists(user member)
 {
 	for (size_t i = 0; i < this->members.size(); i++)
 	{
-		if (member.getFd() == this->members[i].getFd())
+		if (member.get_fd() == this->members[i].get_fd())
 			return true;
 	}
 	return false;
 }
 
-int channel::addMember(user member)
+int channel::add_member(user member)
 {
-	if (memberExists(member))
+	if (member_exists(member))
 	{
 		std::cout << "user exists" << std::endl;
 		return 1;
@@ -21,8 +21,8 @@ int channel::addMember(user member)
 	return 0;
 }
 
-void channel::printMembers()
+void channel::print_members()
 {
 	for (size_t i = 0; i < this->members.size(); i++)
-		std::cout << "User in channel {" << this->name << "} = " << this->members[i].getFd() << std::endl;
+		std::cout << "User in channel {" << this->name << "} = " << this->members[i].get_fd() << std::endl;
 }
