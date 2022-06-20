@@ -5,9 +5,8 @@
 #include "channel.hpp"
 
 #define MAX_NICK_LENGTH 12
-#define INVALID_INCHARS " ,*?!@."
-#define INVALID_STARTCHARS ":$#"
-
+#define INVALID_INCHARS " ,*?!@.:"
+#define INVALID_STARTCHARS "$#"
 
 class channel;
 
