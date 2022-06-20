@@ -126,7 +126,13 @@ user& server::find_user(int userFd)
 int server::send_message(int userFd, std::vector<std::string> &strings)
 {
 	int ret;
-	std::string msg(":" + find_user(userFd).get_nickname() + "!~" + find_user(userFd).get_username() + "@" + find_user(userFd).get_hostname() + " PRIVMSG " + strings[1] + " " + strings[2] + "\n");
+	std::string msg(":" + find_user(userFd).get_nickname() + "!~" + find_user(userFd).get_username() + "@" + find_user(userFd).get_hostname() + " PRIVMSG " + strings[1]);
+	for (size_t i = 2; i < strings.size(); i++)
+	{
+		msg += " ";
+		msg += strings[i];
+	}
+	msg += "\n";
 	std::cout << "[[[" << msg << "]]]" << std::endl;
 	for (size_t i = 0; i < find_channel(strings[1]).members.size(); i++)
 	{
