@@ -3,7 +3,6 @@
 bool	is_valid_nickname(std::string& nick) {
 	std::string start_check = INVALID_STARTCHARS;
 
-	std::cout << start_check << "\t" << nick << std::endl;
 	if (nick.length() > MAX_NICK_LENGTH)
 		return false;
 	if (start_check.find(nick.data(), 0, 1) != std::string::npos)
