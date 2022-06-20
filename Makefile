@@ -24,7 +24,8 @@ all : $(NAME)
 $(NAME) : $(OBJS)
 	$(CXX) $(CXXFLAGS) -o ${NAME} $(OBJS)
 
-
+run : $(NAME)
+	./$(NAME) 
 
 clean : 
 	rm -f $(OBJS)
