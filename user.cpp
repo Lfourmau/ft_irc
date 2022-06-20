@@ -44,12 +44,29 @@ int user::set_command(char *buff)
 	}
 
 };
-int user::set_nickname(std::vector<std::string> &strings)
+int user::set_nickname(std::vector<std::string> &strings, server& server)
 {
 	std::string nick = strings[1];
+	std::cout << "nickname: " << nick << std::endl;
 	
-	if (!is_valid_nickname(nick)) {
+	if (strings.size() < 2) {
+		std::string rpl_message(rpl_string(*this, ERR_NONICKNAMEGIVEN, "No nickname given"));
+		if (send(this->get_fd(), rpl_message.data(), rpl_message.length(), 0) < 0) {
+			perror("  send() failed");
+			return -1;
+		}
+		return 0;
+	}
+	else if (strings.size() > 2 || !is_valid_nickname(nick)) {
 		std::string rpl_message(rpl_string(*this, ERR_ERRONEUSNICKNAME, "Erroneous nickname", nick));
+		if (send(this->get_fd(), rpl_message.data(), rpl_message.length(), 0) < 0) {
+			perror("  send() failed");
+			return -1;
+		}
+		return 0;
+	}
+	else if (server.find_user(nick)) {
+		std::string rpl_message(rpl_string(*this, ERR_NICKNAMEINUSE, "Nickname is already in use", nick));
 		if (send(this->get_fd(), rpl_message.data(), rpl_message.length(), 0) < 0) {
 			perror("  send() failed");
 			return -1;

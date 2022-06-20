@@ -18,7 +18,7 @@ int server::parsing(std::string toparse, int userFd)
 		if (!strings[0].compare("JOIN"))
 			join_channel(userFd, strings);
 		else if (!strings[0].compare("NICK"))
-			find_user(userFd).set_nickname(strings);
+			find_user(userFd).set_nickname(strings, *this);
 		else if (!strings[0].compare("USER"))
 			find_user(userFd).my_register(strings);
 		else if (!strings[0].compare("PRIVMSG"))
@@ -117,6 +117,15 @@ user& server::find_user(int userFd)
 	}
 	//don't know how return because if i call this function, the user exists
 	return (users[0]);
+}
+bool	server::find_user(std::string name)
+{
+	for (size_t i = 0; i < users.size(); i++)
+	{
+		if (users[i].get_nickname() == name)
+			return true;
+	}
+	return false;
 }
 
 
