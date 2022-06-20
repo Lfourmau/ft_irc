@@ -7,8 +7,7 @@
 #define MAX_NICK_LENGTH 12
 #define INVALID_INCHARS " ,*?!@."
 #define INVALID_STARTCHARS ":$#"
-#define ERR_ERRONEUSNICKNAME 432
-#define ERR_NICKNAMEINUSE 433
+
 
 class channel;
 
@@ -23,10 +22,10 @@ class user
 
 		int	const 	&get_fd() const {return fd;};
 		std::string get_command() { return command; };
-		std::string get_username();
-		std::string get_realname();
-		std::string get_nickname();
-		std::string get_hostname();
+		std::string get_username() const;
+		std::string get_realname() const;
+		std::string get_nickname() const;
+		std::string get_hostname() const;
 	
 		int 		set_command(char *buff);
 		int 		set_nickname(std::string nick);

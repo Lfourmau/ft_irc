@@ -8,6 +8,7 @@ SRCS = 	main.cpp \
 		channel.cpp \
 		user.cpp \
 		server.cpp \
+		string_maker.cpp \
 
 OBJS = $(SRCS:.cpp=.o)
 

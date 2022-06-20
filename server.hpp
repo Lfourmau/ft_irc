@@ -17,6 +17,7 @@
 #include "channel.hpp"
 #include "user.hpp"
 #include "rpl.hpp"
+#include "string_maker.hpp"
 
 enum mode
 {

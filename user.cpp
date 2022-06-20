@@ -3,7 +3,6 @@
 bool	is_valid_nickname(std::string& nick) {
 	std::string start_check = INVALID_STARTCHARS;
 
-	std::cout << start_check << "\t" << nick << std::endl;
 	if (nick.length() > MAX_NICK_LENGTH)
 		return false;
 	if (start_check.find(nick.data(), 0, 1) != std::string::npos)
@@ -13,26 +12,6 @@ bool	is_valid_nickname(std::string& nick) {
 	return true;
 }
 
-int user::set_nickname(std::string nick)
-{
-	if (!is_valid_nickname(nick)) {
-		std::string	error(":" + this->get_hostname() + " 432 " + nick + " :Erroneous nickname\n");
-		std::cout << error << std::endl;
-		if (send(this->get_fd(), error.data(), error.length(), 0) < 0) {
-			perror("  send() failed");
-			return -1;
-		}
-		return 0;
-	}
-	std::string msg(":" + this->nickname + "!~" + this->username + "@" + this->hostname + " NICK " + ":" + nick + "\n");
-	this->nickname = nick;
-	if (send(this->fd, msg.data(), msg.length(), 0) < 0)
-	{
-		perror("  send() failed");
-		return -1;
-	}
-	return 0;
-}
 
 int user::my_register(std::vector<std::string> &strings)
 {
@@ -41,6 +20,9 @@ int user::my_register(std::vector<std::string> &strings)
 	return 0;
 }
 
+/*******************************************************/
+/* SETTERS 		                                       */
+/*******************************************************/
 int user::set_command(char *buff)
 {
 	std::string cmd(buff);
@@ -62,7 +44,25 @@ int user::set_command(char *buff)
 	}
 
 };
-
+int user::set_nickname(std::string nick)
+{
+	if (!is_valid_nickname(nick)) {
+		std::string rpl_message(rpl_string(*this, ERR_ERRONEUSNICKNAME, "Erroneous nickname", nick));
+		if (send(this->get_fd(), rpl_message.data(), rpl_message.length(), 0) < 0) {
+			perror("  send() failed");
+			return -1;
+		}
+		return 0;
+	}
+	std::string msg(":" + this->nickname + "!~" + this->username + "@" + this->hostname + " NICK " + ":" + nick + "\n");
+	this->nickname = nick;
+	if (send(this->fd, msg.data(), msg.length(), 0) < 0)
+	{
+		perror("  send() failed");
+		return -1;
+	}
+	return 0;
+}
 void user::set_hostname(sockaddr_in &addr)
 {
 	this->hostname = inet_ntoa(addr.sin_addr);
@@ -72,7 +72,7 @@ void user::set_hostname(sockaddr_in &addr)
 /*******************************************************/
 /* GETTERS 		                                       */
 /*******************************************************/
-std::string user::get_username() { return this->username; }
-std::string user::get_realname() { return this->realname; }
-std::string user::get_nickname() { return this->nickname; }
-std::string user::get_hostname() { return this->hostname; }
+std::string user::get_username() const { return this->username; }
+std::string user::get_realname() const { return this->realname; }
+std::string user::get_nickname() const { return this->nickname; }
+std::string user::get_hostname() const { return this->hostname; }
