@@ -4,6 +4,12 @@
 #include "server.hpp"
 #include "channel.hpp"
 
+#define MAX_NICK_LENGTH 12
+#define INVALID_INCHARS " ,*?!@."
+#define INVALID_STARTCHARS ":$#"
+#define ERR_ERRONEUSNICKNAME 432
+#define ERR_NICKNAMEINUSE 433
+
 class channel;
 
 class user
