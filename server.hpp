@@ -48,6 +48,7 @@ class server
 		std::string get_ip();
 		void		print_channels();
 		void		print_users();
+		std::vector<std::string>	parsing_join_input(std::vector<std::string>& strings);
 
 	private:
 		//int port;
