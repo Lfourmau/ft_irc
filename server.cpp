@@ -16,9 +16,9 @@ int server::parsing(std::string toparse, int userFd)
 		while (getline(stream, word, ' '))
 			strings.push_back(word);
 		if (!strings[0].compare("JOIN"))
-			join_channel(userFd, strings[1], strings[2]);
+			join_channel(userFd, strings);
 		else if (!strings[0].compare("NICK"))
-			find_user(userFd).set_nickname(strings[1]);
+			find_user(userFd).set_nickname(strings);
 		else if (!strings[0].compare("USER"))
 			find_user(userFd).my_register(strings);
 		else if (!strings[0].compare("PRIVMSG"))
@@ -35,14 +35,14 @@ int server::parsing(std::string toparse, int userFd)
 /*******************************************************/
 /* CHANNEL STUFF                                       */
 /*******************************************************/
-int server::join_channel(int userFd, std::string name, std::string key)
+int server::join_channel(int userFd, std::vector<std::string> &strings)
 {
-	if (channel_exists(name))
-		find_channel(name).add_member(find_user(userFd));
+	if (channel_exists(strings[1]))
+		find_channel(strings[1]).add_member(find_user(userFd));
 	else
-		create_channel(name, key, userFd);
-	std::string msg(":" + find_user(userFd).get_nickname() + " JOIN " + name + "\n");
-	send_join_alert(msg, name);
+		create_channel(strings[1], strings[2], userFd);
+	std::string msg(":" + find_user(userFd).get_nickname() + " JOIN " + strings[1] + "\n");
+	send_join_alert(msg, strings[1]);
 	//send(userFd, msg.data(), msg.length(), 0);
 	//findChannel(name).printMembers();
 	return 0;

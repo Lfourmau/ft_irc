@@ -27,7 +27,7 @@ class user
 		std::string get_hostname() const;
 	
 		int 		set_command(char *buff);
-		int 		set_nickname(std::string nick);
+		int 		set_nickname(std::vector<std::string> &strings);
 		void 		set_hostname(sockaddr_in &addr);
 		int			my_register(std::vector<std::string> &strings);
 		int 		is_connected;

@@ -44,8 +44,10 @@ int user::set_command(char *buff)
 	}
 
 };
-int user::set_nickname(std::string nick)
+int user::set_nickname(std::vector<std::string> &strings)
 {
+	std::string nick = strings[1];
+	
 	if (!is_valid_nickname(nick)) {
 		std::string rpl_message(rpl_string(*this, ERR_ERRONEUSNICKNAME, "Erroneous nickname", nick));
 		if (send(this->get_fd(), rpl_message.data(), rpl_message.length(), 0) < 0) {

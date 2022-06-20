@@ -37,7 +37,7 @@ class server
 		int 		parsing(std::string toparse, int userFd);
 		void 		create_channel(std::string name, std::string key, int userFd);
 		bool 		channel_exists(std::string chan);
-		int 		join_channel(int userFd, std::string name, std::string key);
+		int 		join_channel(int userFd, std::vector<std::string> &strings);
 		bool 		user_exists(int fd);
 		int			add_user(int fd, sockaddr_in &addr);
 		channel 	&find_channel(std::string name);
