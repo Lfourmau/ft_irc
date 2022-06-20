@@ -1,20 +1,7 @@
 #include "user.hpp"
 
-int user::init_nickname(std::string nick)
-{
-	std::string msg(":*!~" + this->username + "@" + this->hostname + " NICK " + ":" + nick + "\n");
-	this->nickname = nick;
-	if (send(this->fd, msg.data(), msg.length(), 0) < 0)
-	{
-		perror("  send() failed");
-		return -1;
-	}
-	return 0;
-}
 int user::set_nickname(std::string nick)
 {
-	if (this->nickname.empty())
-		return (init_nickname(nick));
 	std::string msg(":" + this->nickname + "!~" + this->username + "@" + this->hostname + " NICK " + ":" + nick + "\n");
 	this->nickname = nick;
 	if (send(this->fd, msg.data(), msg.length(), 0) < 0)

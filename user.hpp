@@ -9,7 +9,7 @@ class channel;
 class user
 {
 	public:
-		user(int sock) : is_connected(0), fd(sock), command(), nickname() { memset(buff, 0, 80); };
+		user(int sock) : is_connected(0), fd(sock), command(), nickname("*") { memset(buff, 0, 80); };
 		~user() {};
 
 		channel *currentChan;
@@ -24,7 +24,6 @@ class user
 	
 		int 		set_command(char *buff);
 		int 		set_nickname(std::string nick);
-		int			init_nickname(std::string nick);
 		void 		set_hostname(sockaddr_in &addr);
 		int			my_register(std::vector<std::string> &strings);
 		int 		is_connected;
