@@ -154,9 +154,7 @@ int server::send_welcome(int userFd)
 int server::send_join_alert(std::string msg, std::string name)
 {
 	for (size_t i = 0; i < find_channel(name).members.size(); i++)
-	{
 		send(find_channel(name).members[i].get_fd(), msg.data(), msg.length(), 0);
-	}
 	return 0;
 }
 
