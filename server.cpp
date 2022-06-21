@@ -38,7 +38,6 @@ int server::parsing(std::string toparse, int userFd)
 int server::join_channel(int userFd, std::vector<std::string> &strings)
 {
 
-	//std::vector<std::string> channels = parsing_join_input(strings[1]);
 	std::vector<std::string> channels = split_string(strings[1], ',');
 
 	for (std::vector<std::string>::iterator it = channels.begin(); it != channels.end(); ++it) {
@@ -50,21 +49,6 @@ int server::join_channel(int userFd, std::vector<std::string> &strings)
 		send_join_notif(msg, *it);
 	}
 	return 0;
-}
-
-std::vector<std::string>	server::parsing_join_input( std::string& channels ) {
-
-	std::vector<std::string> ret_vec;
-
-	size_t start = 0;
-	size_t end = 0;
-	while ( end != std::string::npos ) {
-		end = channels.find_first_of(',', start);
-		std::string str = channels.substr(start, end - start);
-		ret_vec.push_back(str);
-		start = end + 1;
-	}	
-	return ret_vec;
 }
 
 void server::create_channel(std::string name, std::string key, int userFd)
