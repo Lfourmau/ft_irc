@@ -152,9 +152,9 @@ bool	server::find_user(std::string name)
 /*******************************************************/
 /* SEND FUNCTIONS                                      */
 /*******************************************************/
-std::string server::build_message(int userFd, std::vector<std::string> strings)
+std::string server::build_privmsg(int userFd, std::vector<std::string> strings, std::string recipient)
 {
-	std::string msg(":" + find_user(userFd).get_nickname() + "!~" + find_user(userFd).get_username() + "@" + find_user(userFd).get_hostname() + " PRIVMSG " + strings[1]);
+	std::string msg(":" + find_user(userFd).get_nickname() + "!~" + find_user(userFd).get_username() + "@" + find_user(userFd).get_hostname() + " PRIVMSG " + recipient);
 	//i = 2 because 0and 1 are the command and the recipient
 	for (size_t i = 2; i < strings.size(); i++)
 	{
@@ -164,14 +164,14 @@ std::string server::build_message(int userFd, std::vector<std::string> strings)
 	msg += "\n";
 	return msg;
 }
-int server::send_message_to_channel(int userFd, std::vector<std::string> &strings, std::string msg)
+int server::send_message_to_channel(int userFd, std::string &recipient, std::string msg)
 {
 	int ret;
 
-	for (size_t i = 0; i < find_channel(strings[1]).members.size(); i++)
+	for (size_t i = 0; i < find_channel(recipient).members.size(); i++)
 	{
-		if (find_channel(strings[1]).members[i].get_fd() != userFd)
-			ret = send(find_channel(strings[1]).members[i].get_fd(), msg.data(), msg.length(), 0);
+		if (find_channel(recipient).members[i].get_fd() != userFd)
+			ret = send(find_channel(recipient).members[i].get_fd(), msg.data(), msg.length(), 0);
 		if (ret < 0)
 		{
 			perror("  send() failed");
@@ -180,12 +180,12 @@ int server::send_message_to_channel(int userFd, std::vector<std::string> &string
 	}
 	return 0;
 }
-int server::send_message_to_user(std::vector<std::string> &strings, std::string msg)
+int server::send_message_to_user(std::string &recipient, std::string msg)
 {
 	int fd;
 	for (size_t i = 0; i < this->users.size(); i++)
 	{
-		if (users[i].get_nickname() == strings[1])
+		if (users[i].get_nickname() == recipient)
 			fd = users[i].get_fd();
 	}
 	
@@ -199,13 +199,19 @@ int server::send_message_to_user(std::vector<std::string> &strings, std::string 
 }
 int server::send_message(int userFd, std::vector<std::string> &strings)
 {
-	if (!user_exists(userFd) && !channel_exists(strings[1]))
-		return -1;
-	std::string msg = build_message(userFd, strings);
-	if (channel_exists(strings[1]) && send_message_to_channel(userFd, strings, msg) < 0)
-		return -1;
-	else if (find_user(strings[1]) && send_message_to_user(strings, msg) < 0)
-		return -1;
+	std::vector<std::string> recipients = split_string(strings[1], ',');
+
+	for (std::vector<std::string>::iterator it = recipients.begin(); it != recipients.end(); it++)
+	{
+		if (!user_exists(userFd) && !channel_exists(*it))
+			return -1; //send rpl and continue to the next recipient
+		std::string msg = build_privmsg(userFd, strings, *it);
+		if (channel_exists(*it) && send_message_to_channel(userFd, *it, msg) < 0)
+			return -1; //send failed, continue to next loop ?
+		else if (find_user(*it) && send_message_to_user(*it, msg) < 0)
+			return -1;//send failed, continue to next loop ?
+	}
+	
 	return 0;
 }
 
