@@ -1,5 +1,4 @@
 #include "server.hpp"
-#include <map>
 
 /*******************************************************/
 /* MAIN FUNCTION                                       */
@@ -39,7 +38,8 @@ int server::parsing(std::string toparse, int userFd)
 int server::join_channel(int userFd, std::vector<std::string> &strings)
 {
 
-	std::vector<std::string> channels = parsing_join_input(strings);
+	//std::vector<std::string> channels = parsing_join_input(strings[1]);
+	std::vector<std::string> channels = split_string(strings[1], ',');
 
 	for (std::vector<std::string>::iterator it = channels.begin(); it != channels.end(); ++it) {
 		if (channel_exists(*it))
@@ -47,15 +47,14 @@ int server::join_channel(int userFd, std::vector<std::string> &strings)
 		else
 			create_channel(*it, "fake_key", userFd);
 		std::string msg(":" + find_user(userFd).get_nickname() + " JOIN " + *it + "\n");
-		send_join_alert(msg, *it);
+		send_join_notif(msg, *it);
 	}
 	return 0;
 }
 
-std::vector<std::string>	server::parsing_join_input(std::vector<std::string>& strings) {
+std::vector<std::string>	server::parsing_join_input( std::string& channels ) {
 
 	std::vector<std::string> ret_vec;
-	std::string channels = strings[1];
 
 	size_t start = 0;
 	size_t end = 0;
@@ -178,7 +177,7 @@ int server::send_welcome(int userFd)
 	}
 	return (1);
 }
-int server::send_join_alert(std::string msg, std::string name)
+int server::send_join_notif(std::string msg, std::string name)
 {
 	for (size_t i = 0; i < find_channel(name).members.size(); i++)
 		send(find_channel(name).members[i].get_fd(), msg.data(), msg.length(), 0);

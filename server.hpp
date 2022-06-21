@@ -44,11 +44,11 @@ class server
 		user 		&find_user(int userFd);
 		int 		send_message(int userFd, std::vector<std::string> &cmd);
 		int			send_welcome(int userFd);
-		int			send_join_alert(std::string msg, std::string name);
+		int			send_join_notif(std::string msg, std::string name);
 		std::string get_ip();
 		void		print_channels();
 		void		print_users();
-		std::vector<std::string>	parsing_join_input(std::vector<std::string>& strings);
+		std::vector<std::string>	parsing_join_input(std::string& strings);
 
 	private:
 		//int port;
