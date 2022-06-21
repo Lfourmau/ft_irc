@@ -48,10 +48,11 @@ class server
 		int 		send_message_to_user(std::vector<std::string> &strings, std::string msg);
 		std::string build_message(int userfd, std::vector<std::string> strings);
 		int			send_welcome(int userFd);
-		int			send_join_alert(std::string msg, std::string name);
+		int			send_join_notif(std::string msg, std::string name);
 		std::string get_ip();
 		void		print_channels();
 		void		print_users();
+		std::vector<std::string>	parsing_join_input(std::string& strings);
 
 	private:
 		//int port;

@@ -37,16 +37,36 @@ int server::parsing(std::string toparse, int userFd)
 /*******************************************************/
 int server::join_channel(int userFd, std::vector<std::string> &strings)
 {
-	if (channel_exists(strings[1]))
-		find_channel(strings[1]).add_member(find_user(userFd));
-	else
-		create_channel(strings[1], strings[2], userFd);
-	std::string msg(":" + find_user(userFd).get_nickname() + " JOIN " + strings[1] + "\n");
-	send_join_alert(msg, strings[1]);
-	//send(userFd, msg.data(), msg.length(), 0);
-	//findChannel(name).printMembers();
+
+	//std::vector<std::string> channels = parsing_join_input(strings[1]);
+	std::vector<std::string> channels = split_string(strings[1], ',');
+
+	for (std::vector<std::string>::iterator it = channels.begin(); it != channels.end(); ++it) {
+		if (channel_exists(*it))
+			find_channel(*it).add_member(find_user(userFd));
+		else
+			create_channel(*it, "fake_key", userFd);
+		std::string msg(":" + find_user(userFd).get_nickname() + " JOIN " + *it + "\n");
+		send_join_notif(msg, *it);
+	}
 	return 0;
 }
+
+std::vector<std::string>	server::parsing_join_input( std::string& channels ) {
+
+	std::vector<std::string> ret_vec;
+
+	size_t start = 0;
+	size_t end = 0;
+	while ( end != std::string::npos ) {
+		end = channels.find_first_of(',', start);
+		std::string str = channels.substr(start, end - start);
+		ret_vec.push_back(str);
+		start = end + 1;
+	}	
+	return ret_vec;
+}
+
 void server::create_channel(std::string name, std::string key, int userFd)
 {
 	channel toCreate(name, key);
@@ -200,7 +220,7 @@ int server::send_welcome(int userFd)
 	}
 	return (1);
 }
-int server::send_join_alert(std::string msg, std::string name)
+int server::send_join_notif(std::string msg, std::string name)
 {
 	for (size_t i = 0; i < find_channel(name).members.size(); i++)
 		send(find_channel(name).members[i].get_fd(), msg.data(), msg.length(), 0);
