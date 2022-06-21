@@ -44,6 +44,9 @@ class server
 		user 		&find_user(int userFd);
 		bool		find_user(std::string name);
 		int 		send_message(int userFd, std::vector<std::string> &cmd);
+		int 		send_message_to_channel(int userFd, std::vector<std::string> &strings, std::string msg);
+		int 		send_message_to_user(std::vector<std::string> &strings, std::string msg);
+		std::string build_message(int userfd, std::vector<std::string> strings);
 		int			send_welcome(int userFd);
 		int			send_join_notif(std::string msg, std::string name);
 		std::string get_ip();

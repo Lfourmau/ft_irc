@@ -152,17 +152,22 @@ bool	server::find_user(std::string name)
 /*******************************************************/
 /* SEND FUNCTIONS                                      */
 /*******************************************************/
-int server::send_message(int userFd, std::vector<std::string> &strings)
+std::string server::build_message(int userFd, std::vector<std::string> strings)
 {
-	int ret;
 	std::string msg(":" + find_user(userFd).get_nickname() + "!~" + find_user(userFd).get_username() + "@" + find_user(userFd).get_hostname() + " PRIVMSG " + strings[1]);
+	//i = 2 because 0and 1 are the command and the recipient
 	for (size_t i = 2; i < strings.size(); i++)
 	{
 		msg += " ";
 		msg += strings[i];
 	}
 	msg += "\n";
-	std::cout << "[[[" << msg << "]]]" << std::endl;
+	return msg;
+}
+int server::send_message_to_channel(int userFd, std::vector<std::string> &strings, std::string msg)
+{
+	int ret;
+
 	for (size_t i = 0; i < find_channel(strings[1]).members.size(); i++)
 	{
 		if (find_channel(strings[1]).members[i].get_fd() != userFd)
@@ -175,11 +180,40 @@ int server::send_message(int userFd, std::vector<std::string> &strings)
 	}
 	return 0;
 }
+int server::send_message_to_user(std::vector<std::string> &strings, std::string msg)
+{
+	int fd;
+	for (size_t i = 0; i < this->users.size(); i++)
+	{
+		if (users[i].get_nickname() == strings[1])
+			fd = users[i].get_fd();
+	}
+	
+	int ret = send(fd, msg.data(), msg.length(), 0);
+	if (ret < 0)
+	{
+		perror("  send() failed");
+		return ret;
+	}
+	return 0;
+}
+int server::send_message(int userFd, std::vector<std::string> &strings)
+{
+	if (!user_exists(userFd) && !channel_exists(strings[1]))
+		return -1;
+	std::string msg = build_message(userFd, strings);
+	if (channel_exists(strings[1]) && send_message_to_channel(userFd, strings, msg) < 0)
+		return -1;
+	else if (find_user(strings[1]) && send_message_to_user(strings, msg) < 0)
+		return -1;
+	return 0;
+}
+
 int server::send_welcome(int userFd)
 {
 	if (!find_user(userFd).get_nickname().empty() && !find_user(userFd).get_username().empty() && find_user(userFd).is_connected == 0)
 	{
-		std::string welcome(":" + get_ip() + RPL_WELCOME + find_user(userFd).get_nickname() + " :Welcome to the Ctaleb, Ncatrien and Lfourmau network,  " + find_user(userFd).get_nickname() + "!\n");
+		std::string welcome(":" + get_ip() + RPL_WELCOME + find_user(userFd).get_nickname() + " :Welcome to the Ctaleb, Ncatrien and Lfourmau network, " + find_user(userFd).get_nickname() + "!\n");
 		if (send(userFd, welcome.data(), welcome.length(), 0) < 0)
 			return (-1);
 		find_user(userFd).is_connected = 1;
