@@ -19,7 +19,18 @@ int user::my_register(std::vector<std::string> &strings)
 	this->realname = strings[4];
 	return 0;
 }
-
+int user::send_nickname_notif(std::string msg, server& server)
+{
+	for (size_t i = 0; i < server.get_users().size(); i++)
+	{
+		if (send(server.get_users().at(i).get_fd(), msg.data(), msg.length(), 0) < 0)
+		{
+			perror("  send() failed");
+			return 0;
+		}
+	}
+	return 1;
+}
 /*******************************************************/
 /* SETTERS 		                                       */
 /*******************************************************/
@@ -75,11 +86,8 @@ int user::set_nickname(std::vector<std::string> &strings, server& server)
 	}
 	std::string msg(":" + this->nickname + "!~" + this->username + "@" + this->hostname + " NICK " + ":" + nick + "\n");
 	this->nickname = nick;
-	if (send(this->fd, msg.data(), msg.length(), 0) < 0)
-	{
-		perror("  send() failed");
+	if (!send_nickname_notif(msg, server))
 		return -1;
-	}
 	return 0;
 }
 void user::set_hostname(sockaddr_in &addr)
