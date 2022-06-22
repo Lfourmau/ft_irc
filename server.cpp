@@ -276,6 +276,7 @@ int server::send_join_notif(std::string msg, std::string name)
 /* GETTERS                       			           */
 /*******************************************************/
 std::string server::get_ip() { return this->ip; }
+std::vector<user> &server::get_users() { return this->users; }
 
 
 /*******************************************************/
