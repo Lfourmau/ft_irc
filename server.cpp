@@ -227,7 +227,7 @@ int server::send_message_to_user(std::string &recipient, std::string msg)
 }
 int server::send_privmsg(int userFd, std::vector<std::string> &strings)
 {
-	if (no_recipient_or_text(userFd, strings)) //may be useless because weechat heck args number
+	if (no_recipient_or_text(userFd, strings)) //may be useless because weechat heck args number. but is useful to avoid segfault on next line
 		return -1;
 
 	std::vector<std::string> recipients = split_string(strings[1], ',');
