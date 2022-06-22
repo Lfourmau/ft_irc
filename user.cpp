@@ -65,7 +65,7 @@ int user::set_nickname(std::vector<std::string> &strings, server& server)
 		}
 		return 0;
 	}
-	else if (server.find_user(nick)) {
+	else if (server.user_exists(nick)) {
 		std::string rpl_message(rpl_string(*this, ERR_NICKNAMEINUSE, "Nickname is already in use", nick));
 		if (send(this->get_fd(), rpl_message.data(), rpl_message.length(), 0) < 0) {
 			perror("  send() failed");

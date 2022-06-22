@@ -39,11 +39,12 @@ class server
 		bool 		channel_exists(std::string chan);
 		int 		join_channel(int userFd, std::vector<std::string> &strings);
 		bool 		user_exists(int fd);
+		bool		user_exists(std::string name);
 		int			add_user(int fd, sockaddr_in &addr);
 		channel 	&find_channel(std::string name);
 		user 		&find_user(int userFd);
-		bool		find_user(std::string name);
-		int 		send_message(int userFd, std::vector<std::string> &cmd);
+		int			no_recipient_or_text(int userFd, std::vector<std::string> strings);
+		int 		send_privmsg(int userFd, std::vector<std::string> &cmd);
 		int 		send_message_to_channel(int userFd, std::string &recipient, std::string msg);
 		int 		send_message_to_user(std::string &recipient, std::string msg);
 		std::string build_privmsg(int userfd, std::vector<std::string> strings, std::string recipient);

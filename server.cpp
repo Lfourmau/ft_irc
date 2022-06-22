@@ -22,7 +22,7 @@ int server::parsing(std::string toparse, int userFd)
 		else if (!strings[0].compare("USER"))
 			find_user(userFd).my_register(strings);
 		else if (!strings[0].compare("PRIVMSG"))
-			send_message(userFd, strings);
+			send_privmsg(userFd, strings);
 		toparse.erase(toparse.begin(), toparse.begin() + sep + 2);
 		sep = toparse.find("\r\n", sep + 2);
 	}
@@ -104,6 +104,15 @@ bool server::user_exists(int fd)
 	}
 	return false;
 }
+bool	server::user_exists(std::string name)
+{
+	for (size_t i = 0; i < users.size(); i++)
+	{
+		if (users[i].get_nickname() == name)
+			return true;
+	}
+	return false;
+}
 bool server::channel_exists(std::string chan)
 {
 	for (size_t i = 0; i < this->channels.size(); i++)
@@ -138,20 +147,29 @@ user& server::find_user(int userFd)
 	//don't know how return because if i call this function, the user exists
 	return (users[0]);
 }
-bool	server::find_user(std::string name)
-{
-	for (size_t i = 0; i < users.size(); i++)
-	{
-		if (users[i].get_nickname() == name)
-			return true;
-	}
-	return false;
-}
 
 
 /*******************************************************/
 /* SEND FUNCTIONS                                      */
 /*******************************************************/
+int	server::no_recipient_or_text(int userFd, std::vector<std::string> strings)
+{
+	if (strings.size() < 2)
+	{
+		std::string rpl_msg(rpl_string(find_user(userFd), ERR_NORECIPIENT, "No recipient"));
+		if (send(userFd, rpl_msg.data(), rpl_msg.length(), 0) < 0)
+			perror(" send() failed");
+		return 1;
+	}
+	else if (strings.size() < 3)
+	{
+		std::string rpl_msg(rpl_string(find_user(userFd), ERR_NOTEXTTOSEND, "No text to send"));
+		if (send(userFd, rpl_msg.data(), rpl_msg.length(), 0) < 0)
+			perror(" send() failed");
+		return 1;
+	}
+	return 0;
+}
 std::string server::build_privmsg(int userFd, std::vector<std::string> strings, std::string recipient)
 {
 	std::string msg(":" + find_user(userFd).get_nickname() + "!~" + find_user(userFd).get_username() + "@" + find_user(userFd).get_hostname() + " PRIVMSG " + recipient);
@@ -166,8 +184,18 @@ std::string server::build_privmsg(int userFd, std::vector<std::string> strings, 
 }
 int server::send_message_to_channel(int userFd, std::string &recipient, std::string msg)
 {
+	if (!find_channel(recipient).member_exists(find_user(userFd)))
+	{
+		std::string rpl_message(rpl_string(find_user(userFd), ERR_CANNOTSENDTOCHAN, "Cannot send to channel", recipient));
+		if (send(userFd, rpl_message.data(), rpl_message.length(), 0) < 0)
+		{
+			perror(" Send failed()");
+			return -1;
+		}
+		return 0;
+	}
+	
 	int ret;
-
 	for (size_t i = 0; i < find_channel(recipient).members.size(); i++)
 	{
 		if (find_channel(recipient).members[i].get_fd() != userFd)
@@ -197,18 +225,28 @@ int server::send_message_to_user(std::string &recipient, std::string msg)
 	}
 	return 0;
 }
-int server::send_message(int userFd, std::vector<std::string> &strings)
+int server::send_privmsg(int userFd, std::vector<std::string> &strings)
 {
-	std::vector<std::string> recipients = split_string(strings[1], ',');
+	if (no_recipient_or_text(userFd, strings)) //may be useless because weechat heck args number
+		return -1;
 
+	std::vector<std::string> recipients = split_string(strings[1], ',');
 	for (std::vector<std::string>::iterator it = recipients.begin(); it != recipients.end(); it++)
 	{
-		if (!user_exists(userFd) && !channel_exists(*it))
-			return -1; //send rpl and continue to the next recipient
+		if (!user_exists(*it) && !channel_exists(*it))
+		{
+			std::string rpl_message(rpl_string(find_user(userFd), ERR_NOSUCHNICK, "No such nick/channel", *it));
+			if (send(userFd, rpl_message.data(), rpl_message.length(), 0) < 0)
+			{
+				perror(" Send failed()");
+				return -1;
+			}
+			continue; //send rpl and continue to the next recipient
+		}
 		std::string msg = build_privmsg(userFd, strings, *it);
 		if (channel_exists(*it) && send_message_to_channel(userFd, *it, msg) < 0)
 			return -1; //send failed, continue to next loop ?
-		else if (find_user(*it) && send_message_to_user(*it, msg) < 0)
+		else if (user_exists(*it) && send_message_to_user(*it, msg) < 0)
 			return -1;//send failed, continue to next loop ?
 	}
 	
