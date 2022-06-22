@@ -47,6 +47,16 @@ int server::join_channel(int userFd, std::vector<std::string> &strings)
 			create_channel(*it, "fake_key", userFd);
 		std::string msg(":" + find_user(userFd).get_nickname() + " JOIN " + *it + "\n");
 		send_join_notif(msg, *it);
+		//send_rpl_namreply
+		std::string namreply(":" + get_ip() + RPL_NAMREPLY + find_user(userFd).get_nickname() + " = " + *it + " :");
+		for (std::vector<user>::iterator it_user = find_channel(*it).members.begin(); it_user != find_channel(*it).members.end(); ++it_user)
+			namreply.append(it_user->get_nickname() + " ");
+		namreply.append("\n");
+		std::cerr << "namreply: " << namreply << std::endl;
+		for (std::vector<user>::iterator it_user = find_channel(*it).members.begin(); it_user != find_channel(*it).members.end(); ++it_user)
+			send(it_user->get_fd(), namreply.data(), namreply.length(), 0);
+
+		//send_rpl_endofnames
 	}
 	return 0;
 }
