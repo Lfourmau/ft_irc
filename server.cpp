@@ -53,10 +53,13 @@ int server::join_channel(int userFd, std::vector<std::string> &strings)
 			namreply.append(it_user->get_nickname() + " ");
 		namreply.append("\n");
 		std::cerr << "namreply: " << namreply << std::endl;
-		for (std::vector<user>::iterator it_user = find_channel(*it).members.begin(); it_user != find_channel(*it).members.end(); ++it_user)
+		for (std::vector<user>::iterator it_user = find_channel(*it).members.begin(); it_user != find_channel(*it).members.end(); ++it_user) {
 			send(it_user->get_fd(), namreply.data(), namreply.length(), 0);
+			//send_rpl_endofnames
+			std::string endofnames(":" + get_ip() + RPL_ENDOFNAMES + find_user(userFd).get_nickname() + " " + *it + " :End of /NAMES list.\n");
+			send(it_user->get_fd(), endofnames.data(), endofnames.length(), 0);
+		}	
 
-		//send_rpl_endofnames
 	}
 	return 0;
 }
