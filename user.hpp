@@ -32,6 +32,7 @@ class user
 		void 		set_hostname(sockaddr_in &addr);
 		int			my_register(std::vector<std::string> &strings);
 		int			send_nickname_notif(std::string msg, server &server);
+		int			check_nickname_validity(std::vector<std::string> &strings, server& server, std::string nick);
 
 		int 		is_connected;
 

@@ -2,12 +2,13 @@
 
 bool channel::member_exists(user member)
 {
-	for (size_t i = 0; i < this->members.size(); i++)
+	bool ret = false;
+	for (std::vector<user*>::iterator it = this->members.begin(); it != this->members.end(); ++it)
 	{
-		if (member.get_fd() == this->members[i]->get_fd())
-			return true;
+		if (member.get_fd() == (*it)->get_fd())
+			ret = true;
 	}
-	return false;
+	return ret;
 }
 
 int channel::add_member(user *member)
@@ -23,6 +24,6 @@ int channel::add_member(user *member)
 
 void channel::print_members()
 {
-	for (size_t i = 0; i < this->members.size(); i++)
-		std::cout << "User in channel {" << this->name << "} = " << this->members[i]->get_fd() << "---" << this->members[i]->get_nickname() << std::endl;
+	for (std::vector<user*>::iterator it = this->members.begin(); it != this->members.end(); ++it)
+		std::cout << "User in channel {" << this->name << "} = " << (*it)->get_fd() << "---" << (*it)->get_nickname() << std::endl;
 }
