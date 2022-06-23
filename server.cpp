@@ -52,23 +52,18 @@ int server::join_channel(int userFd, std::vector<std::string> &strings)
 		find_channel(*it).add_member(find_user(userFd));
 		std::string msg(":" + find_user(userFd)->get_nickname() + " JOIN " + *it + "\n");
 		send_join_notif(msg, *it);
+		//send_rpl_namreply
+		std::string namreply(":" + get_ip() + RPL_NAMREPLY + find_user(userFd)->get_nickname() + " = " + *it + " :");
+		for (std::vector<user*>::iterator it_user = find_channel(*it).members.begin(); it_user != find_channel(*it).members.end(); ++it_user)
+			namreply.append((*it_user)->get_nickname() + " ");
+		namreply.append("\n");
+		std::cerr << "namreply: " << namreply << std::endl;
+		send(userFd, namreply.data(), namreply.length(), 0);
+		//send_rpl_endofnames
+		std::string endofnames(":" + get_ip() + RPL_ENDOFNAMES + find_user(userFd)->get_nickname() + " " + *it + " :End of /NAMES list.\n");
+		send(userFd, endofnames.data(), endofnames.length(), 0);
 	}
 	return 0;
-}
-
-std::vector<std::string>	server::parsing_join_input( std::string& channels ) {
-
-	std::vector<std::string> ret_vec;
-
-	size_t start = 0;
-	size_t end = 0;
-	while ( end != std::string::npos ) {
-		end = channels.find_first_of(',', start);
-		std::string str = channels.substr(start, end - start);
-		ret_vec.push_back(str);
-		start = end + 1;
-	}	
-	return ret_vec;
 }
 
 void server::create_channel(std::string name, std::string key)
