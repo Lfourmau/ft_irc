@@ -53,18 +53,15 @@ int server::join_channel(int userFd, std::vector<std::string> &strings)
 		std::string msg(":" + find_user(userFd)->get_nickname() + " JOIN " + *it + "\n");
 		send_join_notif(msg, *it);
 		//send_rpl_namreply
-		std::string namreply(":" + get_ip() + RPL_NAMREPLY + find_user(userFd).get_nickname() + " = " + *it + " :");
-		for (std::vector<user>::iterator it_user = find_channel(*it).members.begin(); it_user != find_channel(*it).members.end(); ++it_user)
-			namreply.append(it_user->get_nickname() + " ");
+		std::string namreply(":" + get_ip() + RPL_NAMREPLY + find_user(userFd)->get_nickname() + " = " + *it + " :");
+		for (std::vector<user*>::iterator it_user = find_channel(*it).members.begin(); it_user != find_channel(*it).members.end(); ++it_user)
+			namreply.append((*it_user)->get_nickname() + " ");
 		namreply.append("\n");
 		std::cerr << "namreply: " << namreply << std::endl;
-		for (std::vector<user>::iterator it_user = find_channel(*it).members.begin(); it_user != find_channel(*it).members.end(); ++it_user) {
-			send(it_user->get_fd(), namreply.data(), namreply.length(), 0);
-			//send_rpl_endofnames
-			std::string endofnames(":" + get_ip() + RPL_ENDOFNAMES + find_user(userFd).get_nickname() + " " + *it + " :End of /NAMES list.\n");
-			send(it_user->get_fd(), endofnames.data(), endofnames.length(), 0);
-		}	
-
+		send(userFd, namreply.data(), namreply.length(), 0);
+		//send_rpl_endofnames
+		std::string endofnames(":" + get_ip() + RPL_ENDOFNAMES + find_user(userFd)->get_nickname() + " " + *it + " :End of /NAMES list.\n");
+		send(userFd, endofnames.data(), endofnames.length(), 0);
 	}
 	return 0;
 }
