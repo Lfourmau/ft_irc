@@ -45,9 +45,5 @@ class user
 		std::string servername;
 };
 
-std::ostream& operator<<(std::ostream &os, const user& client) {
-	os << client.get_nickname();
-	return (os);
-};
 
 #endif

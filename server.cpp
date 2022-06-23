@@ -1,5 +1,11 @@
 #include "server.hpp"
 
+server::~server()
+{
+	for (size_t i = 0; i < users.size(); i++)
+		delete users[i];
+}
+
 /*******************************************************/
 /* MAIN FUNCTION                                       */
 /*******************************************************/
@@ -18,9 +24,9 @@ int server::parsing(std::string toparse, int userFd)
 		if (!strings[0].compare("JOIN"))
 			join_channel(userFd, strings);
 		else if (!strings[0].compare("NICK"))
-			find_user(userFd).set_nickname(strings, *this);
+			find_user(userFd)->set_nickname(strings, *this);
 		else if (!strings[0].compare("USER"))
-			find_user(userFd).my_register(strings);
+			find_user(userFd)->my_register(strings);
 		else if (!strings[0].compare("PRIVMSG"))
 			send_privmsg(userFd, strings);
 		toparse.erase(toparse.begin(), toparse.begin() + sep + 2);
@@ -38,15 +44,13 @@ int server::parsing(std::string toparse, int userFd)
 int server::join_channel(int userFd, std::vector<std::string> &strings)
 {
 
-	//std::vector<std::string> channels = parsing_join_input(strings[1]);
 	std::vector<std::string> channels = split_string(strings[1], ',');
 
 	for (std::vector<std::string>::iterator it = channels.begin(); it != channels.end(); ++it) {
-		if (channel_exists(*it))
-			find_channel(*it).add_member(find_user(userFd));
-		else
-			create_channel(*it, "fake_key", userFd);
-		std::string msg(":" + find_user(userFd).get_nickname() + " JOIN " + *it + "\n");
+		if (!channel_exists(*it))
+			create_channel(*it, "fake_key");
+		find_channel(*it).add_member(find_user(userFd));
+		std::string msg(":" + find_user(userFd)->get_nickname() + " JOIN " + *it + "\n");
 		send_join_notif(msg, *it);
 	}
 	return 0;
@@ -67,10 +71,9 @@ std::vector<std::string>	server::parsing_join_input( std::string& channels ) {
 	return ret_vec;
 }
 
-void server::create_channel(std::string name, std::string key, int userFd)
+void server::create_channel(std::string name, std::string key)
 {
 	channel toCreate(name, key);
-	toCreate.add_member(find_user(userFd));
 	channels.push_back(toCreate);
 }
 
@@ -83,8 +86,8 @@ int server::add_user(int fd, sockaddr_in &addr)
 		std::cout << "user already connected" << std::endl;
 	else
 	{
-		user toAdd(fd);
-		toAdd.set_hostname(addr);
+		user *toAdd = new user(fd);
+		toAdd->set_hostname(addr);
 		this->users.push_back(toAdd);
 	}
 	print_users();
@@ -99,7 +102,7 @@ bool server::user_exists(int fd)
 {
 	for (size_t i = 0; i < this->users.size(); i++)
 	{
-		if (fd == this->users[i].get_fd())
+		if (fd == this->users[i]->get_fd())
 			return true;
 	}
 	return false;
@@ -108,7 +111,7 @@ bool	server::user_exists(std::string name)
 {
 	for (size_t i = 0; i < users.size(); i++)
 	{
-		if (users[i].get_nickname() == name)
+		if (users[i]->get_nickname() == name)
 			return true;
 	}
 	return false;
@@ -137,15 +140,15 @@ channel& server::find_channel(std::string name)
 	//don't know how return because if i call this function, the channel exists
 	return (channels[0]);
 }
-user& server::find_user(int userFd)
+user* server::find_user(int userFd)
 {
+	user* ret = NULL;
 	for (size_t i = 0; i < users.size(); i++)
 	{
-		if (users[i].get_fd() == userFd)
-			return users[i];
+		if (users[i]->get_fd() == userFd)
+			ret = users[i];
 	}
-	//don't know how return because if i call this function, the user exists
-	return (users[0]);
+	return (ret);
 }
 
 
@@ -172,7 +175,7 @@ int	server::no_recipient_or_text(int userFd, std::vector<std::string> strings)
 }
 std::string server::build_privmsg(int userFd, std::vector<std::string> strings, std::string recipient)
 {
-	std::string msg(":" + find_user(userFd).get_nickname() + "!~" + find_user(userFd).get_username() + "@" + find_user(userFd).get_hostname() + " PRIVMSG " + recipient);
+	std::string msg(":" + find_user(userFd)->get_nickname() + "!~" + find_user(userFd)->get_username() + "@" + find_user(userFd)->get_hostname() + " PRIVMSG " + recipient);
 	//i = 2 because 0and 1 are the command and the recipient
 	for (size_t i = 2; i < strings.size(); i++)
 	{
@@ -184,7 +187,7 @@ std::string server::build_privmsg(int userFd, std::vector<std::string> strings, 
 }
 int server::send_message_to_channel(int userFd, std::string &recipient, std::string msg)
 {
-	if (!find_channel(recipient).member_exists(find_user(userFd)))
+	if (!find_channel(recipient).member_exists(*(find_user(userFd))))
 	{
 		std::string rpl_message(rpl_string(find_user(userFd), ERR_CANNOTSENDTOCHAN, "Cannot send to channel", recipient));
 		if (send(userFd, rpl_message.data(), rpl_message.length(), 0) < 0)
@@ -213,8 +216,8 @@ int server::send_message_to_user(std::string &recipient, std::string msg)
 	int fd;
 	for (size_t i = 0; i < this->users.size(); i++)
 	{
-		if (users[i].get_nickname() == recipient)
-			fd = users[i].get_fd();
+		if (users[i]->get_nickname() == recipient)
+			fd = users[i]->get_fd();
 	}
 	
 	int ret = send(fd, msg.data(), msg.length(), 0);
@@ -255,12 +258,12 @@ int server::send_privmsg(int userFd, std::vector<std::string> &strings)
 
 int server::send_welcome(int userFd)
 {
-	if (!find_user(userFd).get_nickname().empty() && !find_user(userFd).get_username().empty() && find_user(userFd).is_connected == 0)
+	if (!find_user(userFd)->get_nickname().empty() && !find_user(userFd)->get_username().empty() && find_user(userFd)->is_connected == 0)
 	{
-		std::string welcome(":" + get_ip() + RPL_WELCOME + find_user(userFd).get_nickname() + " :Welcome to the Ctaleb, Ncatrien and Lfourmau network, " + find_user(userFd).get_nickname() + "!\n");
+		std::string welcome(":" + get_ip() + RPL_WELCOME + find_user(userFd)->get_nickname() + " :Welcome to the Ctaleb, Ncatrien and Lfourmau network, " + find_user(userFd)->get_nickname() + "!\n");
 		if (send(userFd, welcome.data(), welcome.length(), 0) < 0)
 			return (-1);
-		find_user(userFd).is_connected = 1;
+		find_user(userFd)->is_connected = 1;
 	}
 	return (1);
 }
@@ -276,7 +279,8 @@ int server::send_join_notif(std::string msg, std::string name)
 /* GETTERS                       			           */
 /*******************************************************/
 std::string server::get_ip() { return this->ip; }
-std::vector<user> &server::get_users() { return this->users; }
+std::vector<user*> &server::get_users() { return this->users; }
+std::vector<channel> &server::get_channels() { return this->channels; }
 
 
 /*******************************************************/
@@ -291,6 +295,6 @@ void server::print_channels()
 void server::print_users()
 {
 	for (size_t i = 0; i < users.size(); i++)
-		std::cout << "User--> " << users[i].get_fd() << std::endl;
+		std::cout << "User--> " << users[i]->get_fd() << " nickname: " << users[i]->get_nickname() << std::endl;
 	
 }
