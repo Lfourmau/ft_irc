@@ -227,9 +227,9 @@ int main ()
 					/* failure occurs, we will close the                 */
 					/* connection.                                       */
 					/*****************************************************/
-					memset(my_serv.find_user(fds[i].fd).buff, 0, 80);
-					rc = recv(fds[i].fd, my_serv.find_user(fds[i].fd).buff, sizeof(my_serv.find_user(fds[i].fd).buff), 0);
-					std::cout << "{" << my_serv.find_user(fds[i].fd).buff << "}" << std::endl;
+					memset(my_serv.find_user(fds[i].fd)->buff, 0, 80);
+					rc = recv(fds[i].fd, my_serv.find_user(fds[i].fd)->buff, sizeof(my_serv.find_user(fds[i].fd)->buff), 0);
+					std::cout << "{" << my_serv.find_user(fds[i].fd)->buff << "}" << std::endl;
 					if (rc < 0)
 					{
 						if (errno != EWOULDBLOCK)
@@ -258,9 +258,8 @@ int main ()
 					len = rc;
 					printf("  %d bytes received\n", len);
 					//parse instead of echo data to the client
-					if (my_serv.find_user(fds[i].fd).set_command(my_serv.find_user(fds[i].fd).buff))
-						my_serv.parsing(my_serv.find_user(fds[i].fd).get_command(), fds[i].fd);
-		
+					if (my_serv.find_user(fds[i].fd)->set_command(my_serv.find_user(fds[i].fd)->buff))
+						my_serv.parsing(my_serv.find_user(fds[i].fd)->get_command(), fds[i].fd);
 					/*****************************************************/
 					/* Echo the data back to the client                  */
 					/*****************************************************/

@@ -45,4 +45,5 @@ class user
 		std::string servername;
 };
 
+
 #endif
