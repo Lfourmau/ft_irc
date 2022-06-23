@@ -9,6 +9,7 @@
 #define INVALID_STARTCHARS "$#"
 
 class channel;
+class server;
 
 class user
 {
@@ -27,9 +28,11 @@ class user
 		std::string get_hostname() const;
 	
 		int 		set_command(char *buff);
-		int 		set_nickname(std::vector<std::string> &strings);
+		int 		set_nickname(std::vector<std::string> &strings, server& server);
 		void 		set_hostname(sockaddr_in &addr);
 		int			my_register(std::vector<std::string> &strings);
+		int			send_nickname_notif(std::string msg, server &server);
+
 		int 		is_connected;
 
 	private:
@@ -41,5 +44,6 @@ class user
 		std::string nickname;
 		std::string servername;
 };
+
 
 #endif

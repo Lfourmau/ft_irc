@@ -1,12 +1,12 @@
 #include "string_maker.hpp"
 
-std::string prefix_user(const user &client, const char* rpl)
+std::string prefix_user(const user *client, const char* rpl)
 {
-	std::string ret(":" + client.get_hostname() + rpl + client.get_nickname());
+	std::string ret(":" + client->get_hostname() + rpl + client->get_nickname());
 	return ret;
 }
 
-std::string rpl_string(const user &client, const char *rpl, const char *reason, std::string param1, std::string param2)
+std::string rpl_string(const user *client, const char *rpl, const char *reason, std::string param1, std::string param2)
 {
 	std::string ret;
 
