@@ -2,8 +2,8 @@
 
 server::~server()
 {
-	for (size_t i = 0; i < users.size(); i++)
-		delete users[i];
+	for (std::vector<user*>::iterator it = users.begin(); it != users.end(); ++it)
+		delete (*it);
 }
 
 /*******************************************************/
@@ -43,25 +43,14 @@ int server::parsing(std::string toparse, int userFd)
 /*******************************************************/
 int server::join_channel(int userFd, std::vector<std::string> &strings)
 {
-
 	std::vector<std::string> channels = split_string(strings[1], ',');
 
 	for (std::vector<std::string>::iterator it = channels.begin(); it != channels.end(); ++it) {
 		if (!channel_exists(*it))
 			create_channel(*it, "fake_key");
 		find_channel(*it).add_member(find_user(userFd));
-		std::string msg(":" + find_user(userFd)->get_nickname() + " JOIN " + *it + "\n");
-		send_join_notif(msg, *it);
-		//send_rpl_namreply
-		std::string namreply(":" + get_ip() + RPL_NAMREPLY + find_user(userFd)->get_nickname() + " = " + *it + " :");
-		for (std::vector<user*>::iterator it_user = find_channel(*it).members.begin(); it_user != find_channel(*it).members.end(); ++it_user)
-			namreply.append((*it_user)->get_nickname() + " ");
-		namreply.append("\n");
-		std::cerr << "namreply: " << namreply << std::endl;
-		send(userFd, namreply.data(), namreply.length(), 0);
-		//send_rpl_endofnames
-		std::string endofnames(":" + get_ip() + RPL_ENDOFNAMES + find_user(userFd)->get_nickname() + " " + *it + " :End of /NAMES list.\n");
-		send(userFd, endofnames.data(), endofnames.length(), 0);
+		if (send_join_rpl(*it, userFd) < 0)
+			return -1;
 	}
 	return 0;
 }
@@ -95,31 +84,30 @@ int server::add_user(int fd, sockaddr_in &addr)
 /*******************************************************/
 bool server::user_exists(int fd)
 {
-	for (size_t i = 0; i < this->users.size(); i++)
+	for (std::vector<user*>::iterator it = this->users.begin(); it != this->users.end(); ++it)
 	{
-		if (fd == this->users[i]->get_fd())
+		if (fd == (*it)->get_fd())
 			return true;
 	}
 	return false;
 }
 bool	server::user_exists(std::string name)
 {
-	for (size_t i = 0; i < users.size(); i++)
+	for (std::vector<user*>::iterator it = this->users.begin(); it != this->users.end(); ++it)
 	{
-		if (users[i]->get_nickname() == name)
+		if ((*it)->get_nickname() == name)
 			return true;
 	}
 	return false;
 }
 bool server::channel_exists(std::string chan)
 {
-	for (size_t i = 0; i < this->channels.size(); i++)
+	for (std::vector<channel>::iterator it = this->channels.begin(); it != this->channels.end(); ++it)
 	{
-		if (chan == this->channels[i].get_name())
+		if (chan == it->get_name())
 			return true;
 	}
 	return false;
-	
 }
 
 /*******************************************************/
@@ -127,10 +115,10 @@ bool server::channel_exists(std::string chan)
 /*******************************************************/
 channel& server::find_channel(std::string name)
 {
-	for (size_t i = 0; i < this->channels.size(); i++)
+	for (std::vector<channel>::iterator it = this->channels.begin(); it != this->channels.end(); ++it)
 	{
-		if (channels[i].get_name() == name)
-			return channels[i];
+		if (it->get_name() == name)
+			return *it;
 	}
 	//don't know how return because if i call this function, the channel exists
 	return (channels[0]);
@@ -138,10 +126,13 @@ channel& server::find_channel(std::string name)
 user* server::find_user(int userFd)
 {
 	user* ret = NULL;
-	for (size_t i = 0; i < users.size(); i++)
+	for (std::vector<user*>::iterator it = this->users.begin(); it != this->users.end(); ++it)
 	{
-		if (users[i]->get_fd() == userFd)
-			ret = users[i];
+		if ((*it)->get_fd() == userFd)
+		{
+			ret = (*it);
+			break;
+		}
 	}
 	return (ret);
 }
@@ -182,7 +173,8 @@ std::string server::build_privmsg(int userFd, std::vector<std::string> strings, 
 }
 int server::send_message_to_channel(int userFd, std::string &recipient, std::string msg)
 {
-	if (!find_channel(recipient).member_exists(*(find_user(userFd))))
+	channel &chan = find_channel(recipient);
+	if (!chan.member_exists(*(find_user(userFd))))
 	{
 		std::string rpl_message(rpl_string(find_user(userFd), ERR_CANNOTSENDTOCHAN, "Cannot send to channel", recipient));
 		if (send(userFd, rpl_message.data(), rpl_message.length(), 0) < 0)
@@ -194,10 +186,10 @@ int server::send_message_to_channel(int userFd, std::string &recipient, std::str
 	}
 	
 	int ret;
-	for (size_t i = 0; i < find_channel(recipient).members.size(); i++)
+	for (std::vector<user*>::iterator it = chan.members.begin(); it != chan.members.end(); ++it)
 	{
-		if (find_channel(recipient).members[i]->get_fd() != userFd)
-			ret = send(find_channel(recipient).members[i]->get_fd(), msg.data(), msg.length(), 0);
+		if ((*it)->get_fd() != userFd)
+			ret = send((*it)->get_fd(), msg.data(), msg.length(), 0);
 		if (ret < 0)
 		{
 			perror("  send() failed");
@@ -209,10 +201,10 @@ int server::send_message_to_channel(int userFd, std::string &recipient, std::str
 int server::send_message_to_user(std::string &recipient, std::string msg)
 {
 	int fd;
-	for (size_t i = 0; i < this->users.size(); i++)
+	for (std::vector<user*>::iterator it = this->users.begin(); it != this->users.end(); ++it)
 	{
-		if (users[i]->get_nickname() == recipient)
-			fd = users[i]->get_fd();
+		if ((*it)->get_nickname() == recipient)
+			fd = (*it)->get_fd();
 	}
 	
 	int ret = send(fd, msg.data(), msg.length(), 0);
@@ -253,22 +245,46 @@ int server::send_privmsg(int userFd, std::vector<std::string> &strings)
 
 int server::send_welcome(int userFd)
 {
-	if (!find_user(userFd)->get_nickname().empty() && !find_user(userFd)->get_username().empty() && find_user(userFd)->is_connected == 0)
+	user *new_user = find_user(userFd);
+	if (!new_user->get_nickname().empty() && !new_user->get_username().empty() && new_user->is_connected == 0)
 	{
-		std::string welcome(":" + get_ip() + RPL_WELCOME + find_user(userFd)->get_nickname() + " :Welcome to the Ctaleb, Ncatrien and Lfourmau network, " + find_user(userFd)->get_nickname() + "!\n");
+		std::string welcome(":" + get_ip() + RPL_WELCOME + new_user->get_nickname() + " :Welcome to the Ctaleb, Ncatrien and Lfourmau network, " + new_user->get_nickname() + "!\n");
 		if (send(userFd, welcome.data(), welcome.length(), 0) < 0)
 			return (-1);
-		find_user(userFd)->is_connected = 1;
+		new_user->is_connected = 1;
 	}
 	return (1);
 }
 int server::send_join_notif(std::string msg, std::string name)
 {
-	for (size_t i = 0; i < find_channel(name).members.size(); i++)
-		send(find_channel(name).members[i]->get_fd(), msg.data(), msg.length(), 0);
+	channel &chan = find_channel(name);
+	for (std::vector<user*>::iterator it = chan.members.begin(); it != chan.members.end(); ++it)
+		send((*it)->get_fd(), msg.data(), msg.length(), 0);
 	return 0;
 }
 
+int server::send_join_rpl(std::string channel_name, int userFd)
+{
+	channel &chan = find_channel(channel_name);
+	user *new_user = find_user(userFd);
+
+	std::string msg(":" + new_user->get_nickname() + " JOIN " + channel_name + "\n");
+	send_join_notif(msg, channel_name);
+
+	//send_rpl_namreply
+	std::string namreply(":" + get_ip() + RPL_NAMREPLY + new_user->get_nickname() + " = " + channel_name + " :");
+	for (std::vector<user*>::iterator it_user = chan.members.begin(); it_user != chan.members.end(); ++it_user)
+		namreply.append((*it_user)->get_nickname() + " ");
+	namreply.append("\n");
+	std::cerr << "namreply: " << namreply << std::endl;
+	if (send(userFd, namreply.data(), namreply.length(), 0) < 0)
+		return -1;
+	//send_rpl_endofnames
+	std::string endofnames(":" + get_ip() + RPL_ENDOFNAMES + new_user->get_nickname() + " " + channel_name + " :End of /NAMES list.\n");
+	if (send(userFd, endofnames.data(), endofnames.length(), 0) < 0)
+		return -1;
+	return 0;
+}
 
 /*******************************************************/
 /* GETTERS                       			           */
@@ -283,13 +299,11 @@ std::vector<channel> &server::get_channels() { return this->channels; }
 /*******************************************************/
 void server::print_channels()
 {
-	for (size_t i = 0; i < channels.size(); i++)
-		std::cout << "Channel--> " << channels[i].get_name() << std::endl;
-	
+	for (std::vector<channel>::iterator it = channels.begin(); it != channels.end(); ++it)
+		std::cout << "Channel--> " << it->get_name() << std::endl;
 }
 void server::print_users()
 {
-	for (size_t i = 0; i < users.size(); i++)
-		std::cout << "User--> " << users[i]->get_fd() << " nickname: " << users[i]->get_nickname() << std::endl;
-	
+	for (std::vector<user*>::iterator it = users.begin(); it != users.end(); ++it)
+		std::cout << "User--> " << (*it)->get_fd() << " nickname: " << (*it)->get_nickname() << std::endl;
 }

@@ -50,6 +50,7 @@ class server
 		std::string 		build_privmsg(int userfd, std::vector<std::string> strings, std::string recipient);
 		int					send_welcome(int userFd);
 		int					send_join_notif(std::string msg, std::string name);
+		int 				send_join_rpl(std::string channel_name, int userFd);
 		std::string 		get_ip();
 		void				print_channels();
 		void				print_users();

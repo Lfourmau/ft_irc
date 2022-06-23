@@ -21,10 +21,11 @@ int user::my_register(std::vector<std::string> &strings)
 }
 int user::send_nickname_notif(std::string msg, server& server)
 {
-	for (size_t i = 0; i < server.get_users().size(); i++)
+	std::vector<user*> users = server.get_users();
+	for (std::vector<user*>::iterator it = users.begin(); it != users.end(); ++it)
 	{
-		std::cout << "recipient: " << server.get_users().at(i)->get_nickname() << " , msg: " << msg.data();
-		if (send(server.get_users().at(i)->get_fd(), msg.data(), msg.length(), 0) < 0)
+		std::cout << "recipient: " << (*it)->get_nickname() << " , msg: " << msg.data();
+		if (send((*it)->get_fd(), msg.data(), msg.length(), 0) < 0)
 		{
 			perror("  send() failed");
 			return 0;
@@ -60,6 +61,16 @@ int user::set_nickname(std::vector<std::string> &strings, server& server)
 {
 	std::string nick = strings[1];
 	
+	if (check_nickname_validity(strings, server, nick) <= 0)
+		return 0;
+	std::string msg(":" + this->nickname + "!~" + this->username + "@" + this->hostname + " NICK " + ":" + nick + "\n");
+	this->nickname = nick;
+	if (!send_nickname_notif(msg, server))
+		return -1;
+	return 0;
+}
+int user::check_nickname_validity(std::vector<std::string> &strings, server& server, std::string nick)
+{
 	if (strings.size() < 2) {
 		std::string rpl_message(rpl_string(this, ERR_NONICKNAMEGIVEN, "No nickname given"));
 		if (send(this->get_fd(), rpl_message.data(), rpl_message.length(), 0) < 0) {
@@ -84,12 +95,9 @@ int user::set_nickname(std::vector<std::string> &strings, server& server)
 		}
 		return 0;
 	}
-	std::string msg(":" + this->nickname + "!~" + this->username + "@" + this->hostname + " NICK " + ":" + nick + "\n");
-	this->nickname = nick;
-	if (!send_nickname_notif(msg, server))
-		return -1;
-	return 0;
+	return 1;
 }
+
 void user::set_hostname(sockaddr_in &addr)
 {
 	this->hostname = inet_ntoa(addr.sin_addr);
