@@ -2,10 +2,10 @@ NAME = server
 
 INC = 	server.hpp \
 		channel.hpp \
-		user.hpp
+		user.hpp	\
+		rpl.hpp
 
-SRCS = 	main.cpp \
-		channel.cpp \
+SRCS =  channel.cpp \
 		user.cpp \
 		server.cpp \
 		string_maker.cpp \
@@ -20,10 +20,10 @@ all : $(NAME)
 
 
 %.o : %.cpp $(INC)
-	$(CXX) -c $(CXXFLAGS) $< -o $(<:.cpp=.o) -g
+	$(CXX) -c $(CXXFLAGS) $< -o $@
 
-$(NAME) : $(OBJS)
-	$(CXX) $(CXXFLAGS) -o ${NAME} $(OBJS)
+$(NAME) : $(OBJS) main.cpp
+	$(CXX) $(CXXFLAGS) -o ${NAME} main.cpp $(OBJS)
 
 run : $(NAME)
 	./$(NAME) 

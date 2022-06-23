@@ -198,8 +198,8 @@ int server::send_message_to_channel(int userFd, std::string &recipient, std::str
 	int ret;
 	for (size_t i = 0; i < find_channel(recipient).members.size(); i++)
 	{
-		if (find_channel(recipient).members[i].get_fd() != userFd)
-			ret = send(find_channel(recipient).members[i].get_fd(), msg.data(), msg.length(), 0);
+		if (find_channel(recipient).members[i]->get_fd() != userFd)
+			ret = send(find_channel(recipient).members[i]->get_fd(), msg.data(), msg.length(), 0);
 		if (ret < 0)
 		{
 			perror("  send() failed");
@@ -267,7 +267,7 @@ int server::send_welcome(int userFd)
 int server::send_join_notif(std::string msg, std::string name)
 {
 	for (size_t i = 0; i < find_channel(name).members.size(); i++)
-		send(find_channel(name).members[i].get_fd(), msg.data(), msg.length(), 0);
+		send(find_channel(name).members[i]->get_fd(), msg.data(), msg.length(), 0);
 	return 0;
 }
 

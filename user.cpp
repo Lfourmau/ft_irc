@@ -23,6 +23,7 @@ int user::send_nickname_notif(std::string msg, server& server)
 {
 	for (size_t i = 0; i < server.get_users().size(); i++)
 	{
+		std::cout << "recipient: " << server.get_users().at(i).get_nickname() << " , msg: " << msg.data();
 		if (send(server.get_users().at(i).get_fd(), msg.data(), msg.length(), 0) < 0)
 		{
 			perror("  send() failed");

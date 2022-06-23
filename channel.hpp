@@ -15,9 +15,9 @@ class channel
 		std::string const 	&get_name() const {return name;};
 		std::string const 	&get_key() const {return key;};
 		bool 				member_exists(user member);
-		int					add_member(user member);
+		int					add_member(user &member);
 		void 				print_members();
-		std::vector<user> 	members;
+		std::vector<user*> 	members;
 
 	private:
 		std::string			name;
@@ -25,4 +25,12 @@ class channel
 		//mode 		chan_mode
 };
 
+std::ostream& operator<<(std::ostream &os, const channel& chan) {
+	os << "channel name: " << chan.get_name() << std::endl;
+	os << "/tmembers: ";
+	for (size_t i = 0; i < chan.members.size(); ++i)
+		os << chan.members[i] << " ";
+	os << std::endl;
+	return (os);
+};
 #endif
