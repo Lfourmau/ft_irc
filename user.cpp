@@ -100,6 +100,7 @@ int user::check_nickname_validity(std::vector<std::string> &strings, server& ser
 
 void user::set_hostname(sockaddr_in &addr)
 {
+	(void)addr;
 	this->hostname = inet_ntoa(addr.sin_addr);
 	std::cout << this->hostname << std::endl;
 }

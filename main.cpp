@@ -1,6 +1,8 @@
 #include "channel.hpp"
 #include "server.hpp"
 
+#include <fcntl.h>
+
 #define SERVER_PORT  6667
 using namespace std;
 
@@ -43,7 +45,7 @@ int main ()
 	/* the incoming connections will also be nonblocking since   */
 	/* they will inherit that state from the listening socket.   */
 	/*************************************************************/
-	rc = ioctl(listen_sd, FIONBIO, (char *)&on);
+	rc = fcntl(listen_sd, F_SETFL, O_NONBLOCK);
 	if (rc < 0)
 	{
 		perror("ioctl() failed");
@@ -54,11 +56,21 @@ int main ()
 	/*************************************************************/
 	/* Bind the socket                                           */
 	/*************************************************************/
+	/*
 	memset(&addr, 0, sizeof(addr));
 	addr.sin6_family = AF_INET6;
 	memcpy(&addr.sin6_addr, &in6addr_any, sizeof(in6addr_any));
+	addr.sin6_addr = INADDR_ANY;
 	addr.sin6_port = htons(SERVER_PORT);
 	rc = bind(listen_sd, (struct sockaddr *)&addr, sizeof(addr));
+	*/
+	addr.sin6_len = sizeof(addr);
+	addr.sin6_family = AF_INET6;
+	addr.sin6_flowinfo = 0;
+	addr.sin6_port = htons(SERVER_PORT);
+	addr.sin6_addr = in6addr_any; //global variable
+	rc = bind(listen_sd, (struct sockaddr *)&addr, sizeof(addr));
+
 	if (rc < 0)
 	{
 		perror("bind() failed");
@@ -163,9 +175,11 @@ int main ()
 				/* queued up on the listening socket before we         */
 				/* loop back and call poll again.                      */
 				/*******************************************************/
-				sockaddr_in client_addr;
-				client_addr.sin_family = AF_INET;
-				socklen_t addr_len = sizeof(client_addr);
+				
+				struct sockaddr_in   client_addr;
+			
+				client_addr.sin_family = AF_INET6;
+				socklen_t addr_len = sizeof(client_addr.sin_addr);
 				do
 				{
 					/*****************************************************/
