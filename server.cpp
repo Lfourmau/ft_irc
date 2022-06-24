@@ -29,6 +29,8 @@ int server::parsing(std::string toparse, int userFd)
 			find_user(userFd)->my_register(strings);
 		else if (!strings[0].compare("PRIVMSG"))
 			send_privmsg(userFd, strings);
+		else if (!strings[0].compare("KICK"))
+			kick(userFd, strings);
 		toparse.erase(toparse.begin(), toparse.begin() + sep + 2);
 		sep = toparse.find("\r\n", sep + 2);
 	}
@@ -37,6 +39,37 @@ int server::parsing(std::string toparse, int userFd)
 	//printChannels();
 	return 0;
 }
+
+/*******************************************************/
+/* KICK STUFF        	                               */
+/*******************************************************/
+int server::kick(int userFd, std::vector<std::string>& strings)
+{
+	std::cout << "enter in the kick" << std::endl;
+	//if there channel does not exists, the find channel return chan[0]. Need to fix this. 
+	std::string chan_name = strings[1];
+	std::string nickname = strings[2];
+	std::string reason;
+	channel &chan = find_channel(chan_name);
+	if (strings.size() >= 4)
+	{
+		std::cout << "enter in the kick loop" << std::endl;
+		//if the channel does not exist or if the user is not member in the chan, exit.
+		if (!channel_exists(chan_name) || !chan.member_exists(nickname))
+			return -1;
+		std::cout << "going to remove" << std::endl;
+		std::cout << "CHAN -- > " << chan.get_name() << std::endl;
+		chan.remove_member(chan.find_member(nickname));
+		std::cout << "after remove" << std::endl;
+		for (size_t i = 3; i < strings.size(); ++i)
+			reason.append(strings[i] + " ");
+		std::string msg(":" + find_user(userFd)->get_nickname() + " KICK " + chan_name + " " + nickname + " :" + reason + "\n");
+		std::cout << "KICK MESSAGE BUILT : " << msg  << "--" << std::endl;
+		chan.send_to_members(msg);
+	}
+	return 0;
+}
+
 
 /*******************************************************/
 /* CHANNEL STUFF                                       */
