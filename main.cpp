@@ -159,9 +159,14 @@ int main ()
 			/*********************************************************/
 			if(fds[i].revents != POLLIN)
 			{
-				printf("  Error! revents = %d\n", fds[i].revents);
-				end_server = true;
-				break;
+				std::cout << "  Error! revents = " << fds[i].revents << std::endl;
+				std::cout << "POLLERR --> " << POLLERR << std::endl;
+				std::cout << "POLLHUP --> " << POLLHUP << std::endl;
+				std::cout << "POLLNVAL --> " << POLLNVAL << std::endl;
+				if (fds[i].revents != 17) {
+					end_server = true;
+					break;
+				}
 			}
 			if (fds[i].fd == listen_sd)
 			{
@@ -310,6 +315,7 @@ int main ()
 		/* events and revents fields because the events will always*/
 		/* be POLLIN in this case, and revents is output.          */
 		/***********************************************************/
+		/*
 		if (compress_array)
 		{
 			compress_array = false;
@@ -319,6 +325,7 @@ int main ()
 				fds.erase(it);
 			}
 		}
+		*/
 	}; /* End of serving running.    */
 
 	/*************************************************************/
