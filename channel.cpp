@@ -47,7 +47,6 @@ int channel::add_member(user *member)
 }
 int channel::remove_member(user *member)
 {
-	std::cout << "Before frist loop" << std::endl;
 	if (!member_exists(*member))
 	{
 		std::cout << "user does not exist" << std::endl;
@@ -61,7 +60,6 @@ int channel::remove_member(user *member)
 			break;
 		}
 	}
-	std::cout << "after 2nd loop" << std::endl;
 	return 1;
 }
 

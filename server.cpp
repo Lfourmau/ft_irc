@@ -43,30 +43,45 @@ int server::parsing(std::string toparse, int userFd)
 /*******************************************************/
 /* KICK STUFF        	                               */
 /*******************************************************/
+int server::fin_and_send_kick_rpl(int userFd, std::string chan_name, std::string nickname)
+{
+	user *kicker = find_user(userFd);
+	if (!channel_exists(chan_name))
+	{
+		std::string rpl_msg = rpl_string(kicker, ERR_NOSUCHCHANNEL, "No such channel", chan_name);
+		send(userFd, rpl_msg.data(), rpl_msg.length(), 0);
+		return -1;
+	}
+	channel &chan = find_channel(chan_name);
+	if (!chan.member_exists(nickname))
+	{
+		std::string rpl_msg = rpl_string(kicker, ERR_USERNOTINCHANNEL, "They aren't on that channel", nickname, chan_name);
+		send(userFd, rpl_msg.data(), rpl_msg.length(), 0);
+		return -1;
+	}
+	if (!chan.member_exists(kicker->get_nickname()))
+	{
+		std::string rpl_msg = rpl_string(kicker, ERR_NOTONCHANNEL, "You're not on that channel", chan_name);
+		send(userFd, rpl_msg.data(), rpl_msg.length(), 0);
+		return -1;
+	}
+	return 0;
+}
 int server::kick(int userFd, std::vector<std::string>& strings)
 {
-	std::cout << "enter in the kick" << std::endl;
 	//if there channel does not exists, the find channel return chan[0]. Need to fix this. 
 	std::string chan_name = strings[1];
 	std::string nickname = strings[2];
 	std::string reason;
+	if (fin_and_send_kick_rpl(userFd, chan_name, nickname))
+		return -1;
 	channel &chan = find_channel(chan_name);
+	chan.remove_member(chan.find_member(nickname));
 	if (strings.size() >= 4)
-	{
-		std::cout << "enter in the kick loop" << std::endl;
-		//if the channel does not exist or if the user is not member in the chan, exit.
-		if (!channel_exists(chan_name) || !chan.member_exists(nickname))
-			return -1;
-		std::cout << "going to remove" << std::endl;
-		std::cout << "CHAN -- > " << chan.get_name() << std::endl;
-		chan.remove_member(chan.find_member(nickname));
-		std::cout << "after remove" << std::endl;
 		for (size_t i = 3; i < strings.size(); ++i)
 			reason.append(strings[i] + " ");
-		std::string msg(":" + find_user(userFd)->get_nickname() + " KICK " + chan_name + " " + nickname + " :" + reason + "\n");
-		std::cout << "KICK MESSAGE BUILT : " << msg  << "--" << std::endl;
-		chan.send_to_members(msg);
-	}
+	std::string msg(":" + find_user(userFd)->get_nickname() + " KICK " + chan_name + " " + nickname + " :" + reason + "\n");
+	chan.send_to_members(msg);
 	return 0;
 }
 
