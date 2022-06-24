@@ -47,24 +47,29 @@ int server::parsing(std::string toparse, int userFd)
 /*******************************************************/
 int server::part(int userFd, std::vector<std::string>& strings)
 {
+	user *leaver = find_user(userFd);
 	std::vector<std::string> recipients = split_string(strings[1], ',');
 	for (std::vector<std::string>::iterator it = recipients.begin(); it != recipients.end(); ++it)
 	{
-		if (!channel_exsists(*it))
+		if (!channel_exists(*it))
 		{
-			std::string rpl_msg = rpl_string(kicker, ERR_NOSUCHCHANNEL, "No such channel", chan_name);
+			std::string rpl_msg = rpl_string(leaver, ERR_NOSUCHCHANNEL, "No such channel", *it);
 			send(userFd, rpl_msg.data(), rpl_msg.length(), 0);
 			continue ;
 		}
-		if (!find_channel(*it).member_exists(find_user(userFd)))
+		channel& chan_recipient = find_channel(*it);
+		if (!chan_recipient.member_exists(userFd))
 		{
-			std::string rpl_msg = rpl_string(kicker, ERR_NOTONCHANNEL, "You're not on that channel", chan_name);
+			std::string rpl_msg = rpl_string(leaver, ERR_NOTONCHANNEL, "You're not on that channel", *it);
 			send(userFd, rpl_msg.data(), rpl_msg.length(), 0);
 			continue ;
 		}
-		find_channel(*it).remove_member(find_user(userFd));
+		std::string msg(":" + leaver->get_nickname() + " PART " + *it + "\n");
+		chan_recipient.send_to_members(msg);
+		chan_recipient.remove_member(leaver);
+		std::cout << "Part message -- > " << msg << std::endl;
 	}
-	
+	return 0;
 }
 
 
