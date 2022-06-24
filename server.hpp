@@ -39,6 +39,7 @@ class server
 		bool 				channel_exists(std::string chan);
 		int 				join_channel(int userFd, std::vector<std::string> &strings);
 		int 				kick(int userFd, std::vector<std::string>& strings);
+		int 				part(int userFd, std::vector<std::string>& strings);
 		bool 				user_exists(int fd);
 		bool				user_exists(std::string name);
 		int					add_user(int fd, sockaddr_in &addr);

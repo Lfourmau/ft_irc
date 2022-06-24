@@ -31,6 +31,8 @@ int server::parsing(std::string toparse, int userFd)
 			send_privmsg(userFd, strings);
 		else if (!strings[0].compare("KICK"))
 			kick(userFd, strings);
+		else if (!strings[0].compare("PART"))
+			part(userFd, strings);
 		toparse.erase(toparse.begin(), toparse.begin() + sep + 2);
 		sep = toparse.find("\r\n", sep + 2);
 	}
@@ -39,6 +41,32 @@ int server::parsing(std::string toparse, int userFd)
 	//printChannels();
 	return 0;
 }
+
+/*******************************************************/
+/* PART STUFF        	                               */
+/*******************************************************/
+int server::part(int userFd, std::vector<std::string>& strings)
+{
+	std::vector<std::string> recipients = split_string(strings[1], ',');
+	for (std::vector<std::string>::iterator it = recipients.begin(); it != recipients.end(); ++it)
+	{
+		if (!channel_exsists(*it))
+		{
+			std::string rpl_msg = rpl_string(kicker, ERR_NOSUCHCHANNEL, "No such channel", chan_name);
+			send(userFd, rpl_msg.data(), rpl_msg.length(), 0);
+			continue ;
+		}
+		if (!find_channel(*it).member_exists(find_user(userFd)))
+		{
+			std::string rpl_msg = rpl_string(kicker, ERR_NOTONCHANNEL, "You're not on that channel", chan_name);
+			send(userFd, rpl_msg.data(), rpl_msg.length(), 0);
+			continue ;
+		}
+		find_channel(*it).remove_member(find_user(userFd));
+	}
+	
+}
+
 
 /*******************************************************/
 /* KICK STUFF        	                               */
