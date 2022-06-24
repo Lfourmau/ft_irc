@@ -30,6 +30,7 @@ run : $(NAME)
 
 clean : 
 	rm -f $(OBJS)
+	$(RM) -r *.dSYM
 
 fclean : clean
 	rm -f $(NAME)
