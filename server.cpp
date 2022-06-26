@@ -127,6 +127,12 @@ int server::join_channel(int userFd, std::vector<std::string> &strings)
 	std::vector<std::string> channels = split_string(strings[1], ',');
 
 	for (std::vector<std::string>::iterator it = channels.begin(); it != channels.end(); ++it) {
+		if ((*it)[0] != '#')
+		{
+			std::string rpl_msg = rpl_string(find_user(userFd), ERR_NOSUCHCHANNEL, "No such channel", *it);
+			send(userFd, rpl_msg.data(), rpl_msg.length(), 0);
+			return -1;
+		}
 		if (!channel_exists(*it))
 			create_channel(*it, "fake_key");
 		find_channel(*it).add_member(find_user(userFd));
