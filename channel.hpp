@@ -15,7 +15,11 @@ class channel
 		std::string const 	&get_name() const {return name;};
 		std::string const 	&get_key() const {return key;};
 		bool 				member_exists(user member);
+		bool 				member_exists(std::string nickname);
 		int					add_member(user *member);
+		int					remove_member(user *member);
+		user 				*find_member(std::string nickname);
+		int					send_to_members(std::string msg);
 		void 				print_members();
 		std::vector<user*> 	members;
 

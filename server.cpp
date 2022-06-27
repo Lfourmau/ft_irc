@@ -29,6 +29,10 @@ int server::parsing(std::string toparse, int userFd)
 			find_user(userFd)->my_register(strings);
 		else if (!strings[0].compare("PRIVMSG"))
 			send_privmsg(userFd, strings);
+		else if (!strings[0].compare("KICK"))
+			kick(userFd, strings);
+		else if (!strings[0].compare("PART"))
+			part(userFd, strings);
 		toparse.erase(toparse.begin(), toparse.begin() + sep + 2);
 		sep = toparse.find("\r\n", sep + 2);
 	}
@@ -39,6 +43,83 @@ int server::parsing(std::string toparse, int userFd)
 }
 
 /*******************************************************/
+/* PART STUFF        	                               */
+/*******************************************************/
+int server::part(int userFd, std::vector<std::string>& strings)
+{
+	user *leaver = find_user(userFd);
+	std::vector<std::string> recipients = split_string(strings[1], ',');
+	for (std::vector<std::string>::iterator it = recipients.begin(); it != recipients.end(); ++it)
+	{
+		if (!channel_exists(*it))
+		{
+			std::string rpl_msg = rpl_string(leaver, ERR_NOSUCHCHANNEL, "No such channel", *it);
+			send(userFd, rpl_msg.data(), rpl_msg.length(), 0);
+			continue ;
+		}
+		channel& chan_recipient = find_channel(*it);
+		if (!chan_recipient.member_exists(userFd))
+		{
+			std::string rpl_msg = rpl_string(leaver, ERR_NOTONCHANNEL, "You're not on that channel", *it);
+			send(userFd, rpl_msg.data(), rpl_msg.length(), 0);
+			continue ;
+		}
+		std::string msg(":" + leaver->get_nickname() + " PART " + *it + "\n");
+		chan_recipient.send_to_members(msg);
+		chan_recipient.remove_member(leaver);
+		std::cout << "Part message -- > " << msg << std::endl;
+	}
+	return 0;
+}
+
+
+/*******************************************************/
+/* KICK STUFF        	                               */
+/*******************************************************/
+int server::fin_and_send_kick_rpl(int userFd, std::string chan_name, std::string nickname)
+{
+	user *kicker = find_user(userFd);
+	if (!channel_exists(chan_name))
+	{
+		std::string rpl_msg = rpl_string(kicker, ERR_NOSUCHCHANNEL, "No such channel", chan_name);
+		send(userFd, rpl_msg.data(), rpl_msg.length(), 0);
+		return -1;
+	}
+	channel &chan = find_channel(chan_name);
+	if (!chan.member_exists(nickname))
+	{
+		std::string rpl_msg = rpl_string(kicker, ERR_USERNOTINCHANNEL, "They aren't on that channel", nickname, chan_name);
+		send(userFd, rpl_msg.data(), rpl_msg.length(), 0);
+		return -1;
+	}
+	if (!chan.member_exists(kicker->get_nickname()))
+	{
+		std::string rpl_msg = rpl_string(kicker, ERR_NOTONCHANNEL, "You're not on that channel", chan_name);
+		send(userFd, rpl_msg.data(), rpl_msg.length(), 0);
+		return -1;
+	}
+	return 0;
+}
+int server::kick(int userFd, std::vector<std::string>& strings)
+{
+	//if there channel does not exists, the find channel return chan[0]. Need to fix this. 
+	std::string chan_name = strings[1];
+	std::string nickname = strings[2];
+	std::string reason;
+	if (fin_and_send_kick_rpl(userFd, chan_name, nickname))
+		return -1;
+	channel &chan = find_channel(chan_name);
+	chan.remove_member(chan.find_member(nickname));
+	if (strings.size() >= 4)
+		for (size_t i = 3; i < strings.size(); ++i)
+			reason.append(strings[i] + " ");
+	std::string msg(":" + find_user(userFd)->get_nickname() + " KICK " + chan_name + " " + nickname + " :" + reason + "\n");
+	chan.send_to_members(msg);
+	return 0;
+}
+
+
+/*******************************************************/
 /* CHANNEL STUFF                                       */
 /*******************************************************/
 int server::join_channel(int userFd, std::vector<std::string> &strings)
@@ -46,6 +127,12 @@ int server::join_channel(int userFd, std::vector<std::string> &strings)
 	std::vector<std::string> channels = split_string(strings[1], ',');
 
 	for (std::vector<std::string>::iterator it = channels.begin(); it != channels.end(); ++it) {
+		if ((*it)[0] != '#')
+		{
+			std::string rpl_msg = rpl_string(find_user(userFd), ERR_NOSUCHCHANNEL, "No such channel", *it);
+			send(userFd, rpl_msg.data(), rpl_msg.length(), 0);
+			return -1;
+		}
 		if (!channel_exists(*it))
 			create_channel(*it, "fake_key");
 		find_channel(*it).add_member(find_user(userFd));
