@@ -13,7 +13,7 @@ SRCS =  channel.cpp \
 OBJS = $(SRCS:.cpp=.o)
 
 
-CXXFLAGS = -Wall -Wextra -Werror -std=c++98 -g #-fsanitize=address
+CXXFLAGS = -Wall -Wextra -Werror -std=c++98 -g -fsanitize=address
 CXX = clang++
 
 all : $(NAME)
@@ -30,6 +30,7 @@ run : $(NAME)
 
 clean : 
 	rm -f $(OBJS)
+	$(RM) -r *.dSYM
 
 fclean : clean
 	rm -f $(NAME)
