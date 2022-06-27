@@ -409,6 +409,7 @@ int server::remove_user(user *user_to_remove)
 	{
 		if ((*it)->get_nickname() == user_to_remove->get_nickname())
 		{
+			delete (*it);
 			this->users.erase(it);
 			break;
 		}
