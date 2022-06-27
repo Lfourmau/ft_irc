@@ -1,6 +1,8 @@
 #include "channel.hpp"
 #include "server.hpp"
 
+#include <fcntl.h>
+
 #define SERVER_PORT  6667
 using namespace std;
 
@@ -43,7 +45,7 @@ int main ()
 	/* the incoming connections will also be nonblocking since   */
 	/* they will inherit that state from the listening socket.   */
 	/*************************************************************/
-	rc = ioctl(listen_sd, FIONBIO, (char *)&on);
+	rc = fcntl(listen_sd, F_SETFL, O_NONBLOCK);
 	if (rc < 0)
 	{
 		perror("ioctl() failed");
@@ -54,11 +56,21 @@ int main ()
 	/*************************************************************/
 	/* Bind the socket                                           */
 	/*************************************************************/
+	/*
 	memset(&addr, 0, sizeof(addr));
 	addr.sin6_family = AF_INET6;
 	memcpy(&addr.sin6_addr, &in6addr_any, sizeof(in6addr_any));
+	addr.sin6_addr = INADDR_ANY;
 	addr.sin6_port = htons(SERVER_PORT);
 	rc = bind(listen_sd, (struct sockaddr *)&addr, sizeof(addr));
+	*/
+	addr.sin6_len = sizeof(addr);
+	addr.sin6_family = AF_INET6;
+	addr.sin6_flowinfo = 0;
+	addr.sin6_port = htons(SERVER_PORT);
+	addr.sin6_addr = in6addr_any; //global variable
+	rc = bind(listen_sd, (struct sockaddr *)&addr, sizeof(addr));
+
 	if (rc < 0)
 	{
 		perror("bind() failed");
@@ -145,9 +157,10 @@ int main ()
 			/* If revents is not POLLIN, it's an unexpected result,  */
 			/* log and end the server.                               */
 			/*********************************************************/
-			if(fds[i].revents != POLLIN)
+			// when a connection is closed, revents == 17
+			if(fds[i].revents != POLLIN && fds[i].revents != 17) 
 			{
-				printf("  Error! revents = %d\n", fds[i].revents);
+				std::cout << "  Error! revents = " << fds[i].revents << std::endl;
 				end_server = true;
 				break;
 			}
@@ -163,9 +176,11 @@ int main ()
 				/* queued up on the listening socket before we         */
 				/* loop back and call poll again.                      */
 				/*******************************************************/
-				sockaddr_in client_addr;
-				client_addr.sin_family = AF_INET;
-				socklen_t addr_len = sizeof(client_addr);
+				
+				struct sockaddr_in   client_addr;
+			
+				client_addr.sin_family = AF_INET6;
+				socklen_t addr_len = sizeof(client_addr.sin_addr);
 				do
 				{
 					/*****************************************************/
@@ -247,6 +262,7 @@ int main ()
 					if (rc == 0)
 					{
 						printf("  Connection closed\n");
+						my_serv.quit(fds[i].fd);
 						close_conn = true;
 						break;
 					}
@@ -259,19 +275,15 @@ int main ()
 					printf("  %d bytes received\n", len);
 					//parse instead of echo data to the client
 					if (my_serv.find_user(fds[i].fd)->set_command(my_serv.find_user(fds[i].fd)->buff))
-						my_serv.parsing(my_serv.find_user(fds[i].fd)->get_command(), fds[i].fd);
-					/*****************************************************/
-					/* Echo the data back to the client                  */
-					/*****************************************************/
-					//rc = send(fds[i].fd, buffer, len, 0);
-					//if (rc < 0)
-					//{
-					//	perror("  send() failed");
-					//	close_conn = true;
-					//	break;
-					//}
+					{
+						if (my_serv.parsing(my_serv.find_user(fds[i].fd)->get_command(), fds[i].fd) == QUIT)
+						{
+							my_serv.quit(fds[i].fd);
+							close_conn = true;
+							break;
+						}
+					}
 				}
-
 			/*******************************************************/
 			/* If the close_conn flag was turned on, we need       */
 			/* to clean up this active connection. This            */
@@ -296,15 +308,18 @@ int main ()
 		/* events and revents fields because the events will always*/
 		/* be POLLIN in this case, and revents is output.          */
 		/***********************************************************/
+		
 		if (compress_array)
 		{
+			std::cout << " in compress array\n";
 			compress_array = false;
-			for (vector<struct pollfd>::iterator it = fds.begin(); it != fds.end(); it++)
+			for (vector<struct pollfd>::iterator it = fds.begin(); it != fds.end(); ++it)
 			{
-			if ((*it).fd == -1)
-				fds.erase(it);
+				if (it->fd == -1)
+					fds.erase(it--);
 			}
 		}
+		
 	}; /* End of serving running.    */
 
 	/*************************************************************/

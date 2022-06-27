@@ -1,6 +1,7 @@
 #ifndef SERVER_HPP
 # define SERVER_HPP
 
+# define QUIT (-1)
 #include <stdio.h>
 #include <vector>
 #include <iostream>
@@ -34,7 +35,7 @@ class server
 		int 				join_channel(int userFd, std::vector<std::string> &strings);
 		int 				kick(int userFd, std::vector<std::string>& strings);
 		int 				part(int userFd, std::vector<std::string>& strings);
-		int 				quit(int userFd, std::vector<std::string>& strings);
+		int 				quit(int userFd);
 		bool 				user_exists(int fd);
 		bool				user_exists(std::string name);
 		int					add_user(int fd, sockaddr_in &addr);

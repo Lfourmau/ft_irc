@@ -13,11 +13,11 @@ class server;
 
 enum user_mode
 {
-	invisible,
-	oper,
-	local_oper,
-	registered,
-	wallops,
+	INVISIBLE_MODE,
+	OPER_MODE,
+	LOCAL_OPER_MODE,
+	REGISTERED_MODE,
+	WALLOPS_MODE,
 };
 
 class user

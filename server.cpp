@@ -34,11 +34,11 @@ int server::parsing(std::string toparse, int userFd)
 		else if (!strings[0].compare("PART"))
 			part(userFd, strings);
 		else if (!strings[0].compare("QUIT"))
-			quit(userFd, strings);
+			return QUIT;
 		toparse.erase(toparse.begin(), toparse.begin() + sep + 2);
 		sep = toparse.find("\r\n", sep + 2);
 	}
-	if (send_welcome(userFd) < 0)
+	if (find_user(userFd) && find_user(userFd)->is_connected == 0 && send_welcome(userFd) < 0)
 		return 1;
 	//printChannels();
 	return 0;
@@ -47,17 +47,16 @@ int server::parsing(std::string toparse, int userFd)
 /*******************************************************/
 /* QUIT STUFF        	                               */
 /*******************************************************/
-int server::quit(int userFd, std::vector<std::string>& strings)
+int server::quit(int userFd)
 {
-	(void)strings; //may be useful later (for the reason of quit)
 	user *user_to_quit = find_user(userFd);
 	std::string msg(":" + user_to_quit->get_nickname() + "!~" + user_to_quit->get_username() + "@" + user_to_quit->get_hostname() + " QUIT :Client quit\n");
 	for (std::vector<channel>::iterator chan = channels.begin(); chan != channels.end(); ++chan)
 	{
-		if ((*chan).member_exists(user_to_quit->get_nickname()))
+		if (chan->member_exists(user_to_quit->get_nickname()))
 		{
-			(*chan).send_to_members(msg);
-			(*chan).remove_member(user_to_quit);
+			chan->send_to_members(msg);
+			chan->remove_member(chan->find_member(user_to_quit->get_nickname()));
 		}
 	}
 	this->remove_user(user_to_quit);
@@ -187,7 +186,6 @@ int server::add_user(int fd, sockaddr_in &addr)
 	print_users();
 	return 0;
 }
-
 
 /*******************************************************/
 /* EXISTS FUNCTION                                     */
@@ -356,7 +354,7 @@ int server::send_privmsg(int userFd, std::vector<std::string> &strings)
 int server::send_welcome(int userFd)
 {
 	user *new_user = find_user(userFd);
-	if (!new_user->get_nickname().empty() && !new_user->get_username().empty() && new_user->is_connected == 0)
+	if (!new_user->get_nickname().empty() && !new_user->get_username().empty())
 	{
 		std::string welcome(":" + get_ip() + RPL_WELCOME + new_user->get_nickname() + " :Welcome to the Ctaleb, Ncatrien and Lfourmau network, " + new_user->get_nickname() + "!\n");
 		if (send(userFd, welcome.data(), welcome.length(), 0) < 0)

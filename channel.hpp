@@ -8,16 +8,16 @@ class user;
 
 enum chan_mode
 {
-	ban,
-	exception,
-	client_limit,
-	invite_only,
-	invite_exception,
-	key,
-	moderated,
-	secret,
-	protected_topic,
-	no_external_messages,
+	BAN_MODE,
+	EXCPTION_MODE,
+	CLIENT_LIMIT_MODE,
+	INVITE_ONLY_MODE,
+	INVITE_EXCEPTION_MODE,
+	KEY_MODE,
+	MODERATED_MODE,
+	SECRET_MODE,
+	PROTECTED_TOPIC_MODE,
+	NO_EXTERNAL_MESSAGES_MODE,
 
 };
 
