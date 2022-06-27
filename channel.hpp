@@ -33,10 +33,6 @@ class channel
 		bool 				member_exists(std::string nickname);
 		int					add_member(user *member);
 		int					remove_member(user *member);
-<<<<<<< Updated upstream
-=======
-
->>>>>>> Stashed changes
 		user 				*find_member(std::string nickname);
 		int					send_to_members(std::string msg);
 		void 				print_members();
