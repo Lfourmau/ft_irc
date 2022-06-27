@@ -33,6 +33,8 @@ int server::parsing(std::string toparse, int userFd)
 			kick(userFd, strings);
 		else if (!strings[0].compare("PART"))
 			part(userFd, strings);
+		else if (!strings[0].compare("QUIT"))
+			quit(userFd, strings);
 		toparse.erase(toparse.begin(), toparse.begin() + sep + 2);
 		sep = toparse.find("\r\n", sep + 2);
 	}
@@ -41,6 +43,27 @@ int server::parsing(std::string toparse, int userFd)
 	//printChannels();
 	return 0;
 }
+
+/*******************************************************/
+/* QUIT STUFF        	                               */
+/*******************************************************/
+int server::quit(int userFd, std::vector<std::string>& strings)
+{
+	(void)strings; //may be useful later (for the reason of quit)
+	user *user_to_quit = find_user(userFd);
+	std::string msg(":" + user_to_quit->get_nickname() + "!~" + user_to_quit->get_username() + "@" + user_to_quit->get_hostname() + " QUIT :Client quit\n");
+	for (std::vector<channel>::iterator chan = channels.begin(); chan != channels.end(); ++chan)
+	{
+		if ((*chan).member_exists(user_to_quit->get_nickname()))
+		{
+			(*chan).send_to_members(msg);
+			(*chan).remove_member(user_to_quit);
+		}
+	}
+	this->remove_user(user_to_quit);
+	return 0;
+}
+
 
 /*******************************************************/
 /* PART STUFF        	                               */
@@ -373,6 +396,27 @@ int server::send_join_rpl(std::string channel_name, int userFd)
 	return 0;
 }
 
+
+/*******************************************************/
+/* REMOVE                       			           */
+/*******************************************************/
+int server::remove_user(user *user_to_remove)
+{
+	if (!this->user_exists(user_to_remove->get_fd()))
+	{
+		std::cout << "user does not exist" << std::endl;
+		return 0;
+	}
+	for (std::vector<user*>::iterator it = this->users.begin(); it != this->users.end(); ++it)
+	{
+		if ((*it)->get_nickname() == user_to_remove->get_nickname())
+		{
+			this->users.erase(it);
+			break;
+		}
+	}
+	return 1;
+}
 /*******************************************************/
 /* GETTERS                       			           */
 /*******************************************************/

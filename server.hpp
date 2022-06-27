@@ -34,6 +34,7 @@ class server
 		int 				join_channel(int userFd, std::vector<std::string> &strings);
 		int 				kick(int userFd, std::vector<std::string>& strings);
 		int 				part(int userFd, std::vector<std::string>& strings);
+		int 				quit(int userFd, std::vector<std::string>& strings);
 		bool 				user_exists(int fd);
 		bool				user_exists(std::string name);
 		int					add_user(int fd, sockaddr_in &addr);
@@ -49,6 +50,7 @@ class server
 		int 				send_join_rpl(std::string channel_name, int userFd);
 		int 				fin_and_send_kick_rpl(int userFd, std::string chan_name, std::string nickname);
 		std::string 		get_ip();
+		int 				remove_user(user *user_to_remove);
 		void				print_channels();
 		void				print_users();
 		std::vector<user*> 	&get_users();
