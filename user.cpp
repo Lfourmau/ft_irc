@@ -100,6 +100,7 @@ int user::check_nickname_validity(std::vector<std::string> &strings, server& ser
 
 void user::set_hostname(sockaddr_in &addr)
 {
+	(void)addr;
 	this->hostname = inet_ntoa(addr.sin_addr);
 	std::cout << this->hostname << std::endl;
 }
@@ -112,4 +113,6 @@ std::string user::get_username() const { return this->username; }
 std::string user::get_realname() const { return this->realname; }
 std::string user::get_nickname() const { return this->nickname; }
 std::string user::get_hostname() const { return this->hostname; }
+
 user_mode 	user::get_mode() const { return this->mode; }
+
