@@ -8,16 +8,16 @@ class user;
 
 enum chan_mode
 {
-	ban,
-	exception,
-	client_limit,
-	invite_only,
-	invite_exception,
-	key,
-	moderated,
-	secret,
-	protected_topic,
-	no_external_messages,
+	BAN_MODE,
+	EXCPTION_MODE,
+	CLIENT_LIMIT_MODE,
+	INVITE_ONLY_MODE,
+	INVITE_EXCEPTION_MODE,
+	KEY_MODE,
+	MODERATED_MODE,
+	SECRET_MODE,
+	PROTECTED_TOPIC_MODE,
+	NO_EXTERNAL_MESSAGES_MODE,
 
 };
 
@@ -33,6 +33,10 @@ class channel
 		bool 				member_exists(std::string nickname);
 		int					add_member(user *member);
 		int					remove_member(user *member);
+<<<<<<< Updated upstream
+=======
+
+>>>>>>> Stashed changes
 		user 				*find_member(std::string nickname);
 		int					send_to_members(std::string msg);
 		void 				print_members();
