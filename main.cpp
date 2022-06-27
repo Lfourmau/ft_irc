@@ -262,6 +262,7 @@ int main ()
 					if (rc == 0)
 					{
 						printf("  Connection closed\n");
+						// TODO: send QUIT
 						close_conn = true;
 						break;
 					}
@@ -275,17 +276,6 @@ int main ()
 					//parse instead of echo data to the client
 					if (my_serv.find_user(fds[i].fd)->set_command(my_serv.find_user(fds[i].fd)->buff))
 						my_serv.parsing(my_serv.find_user(fds[i].fd)->get_command(), fds[i].fd);
-					/*****************************************************/
-					/* Echo the data back to the client                  */
-					/*****************************************************/
-					//rc = send(fds[i].fd, buffer, len, 0);
-					//if (rc < 0)
-					//{
-					//	perror("  send() failed");
-					//	close_conn = true;
-					//	break;
-					//}
-				}
 
 			/*******************************************************/
 			/* If the close_conn flag was turned on, we need       */
@@ -311,17 +301,18 @@ int main ()
 		/* events and revents fields because the events will always*/
 		/* be POLLIN in this case, and revents is output.          */
 		/***********************************************************/
-		/*
+		
 		if (compress_array)
 		{
+			std::cout << " in compress array\n";
 			compress_array = false;
-			for (vector<struct pollfd>::iterator it = fds.begin(); it != fds.end(); it++)
+			for (vector<struct pollfd>::iterator it = fds.begin(); it != fds.end(); ++it)
 			{
-			if ((*it).fd == -1)
-				fds.erase(it);
+				if (it->fd == -1)
+					fds.erase(it--);
 			}
 		}
-		*/
+		
 	}; /* End of serving running.    */
 
 	/*************************************************************/
