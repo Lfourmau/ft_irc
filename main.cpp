@@ -157,16 +157,12 @@ int main ()
 			/* If revents is not POLLIN, it's an unexpected result,  */
 			/* log and end the server.                               */
 			/*********************************************************/
-			if(fds[i].revents != POLLIN)
+			// when a connection is closed, revents == 17
+			if(fds[i].revents != POLLIN && fds[i].revents != 17) 
 			{
 				std::cout << "  Error! revents = " << fds[i].revents << std::endl;
-				std::cout << "POLLERR --> " << POLLERR << std::endl;
-				std::cout << "POLLHUP --> " << POLLHUP << std::endl;
-				std::cout << "POLLNVAL --> " << POLLNVAL << std::endl;
-				if (fds[i].revents != 17) {
-					end_server = true;
-					break;
-				}
+				end_server = true;
+				break;
 			}
 			if (fds[i].fd == listen_sd)
 			{
