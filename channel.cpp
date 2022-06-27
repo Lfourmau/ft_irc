@@ -76,6 +76,8 @@ int	channel::send_to_members(std::string msg)
 	return 0;
 }
 
+void		channel::set_mode(chan_mode mode_to_set) { this->mode = mode_to_set; }
+chan_mode 	channel::get_mode() { return this->mode ;}
 void channel::print_members()
 {
 	for (std::vector<user*>::iterator it = this->members.begin(); it != this->members.end(); ++it)

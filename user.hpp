@@ -11,6 +11,15 @@
 class channel;
 class server;
 
+enum user_mode
+{
+	invisible,
+	oper,
+	local_oper,
+	registered,
+	wallops,
+};
+
 class user
 {
 	public:
@@ -26,10 +35,13 @@ class user
 		std::string get_realname() const;
 		std::string get_nickname() const;
 		std::string get_hostname() const;
+		user_mode 	get_mode() const;
+		void	 	get_mode(user_mode) const;
 	
 		int 		set_command(char *buff);
 		int 		set_nickname(std::vector<std::string> &strings, server& server);
 		void 		set_hostname(sockaddr_in &addr);
+		void 		set_mode(user_mode mode_to_set);
 		int			my_register(std::vector<std::string> &strings);
 		int			send_nickname_notif(std::string msg, server &server);
 		int			check_nickname_validity(std::vector<std::string> &strings, server& server, std::string nick);
@@ -38,6 +50,7 @@ class user
 
 	private:
 		int fd;
+		user_mode mode;
 		std::string command;
 		std::string username;
 		std::string realname;

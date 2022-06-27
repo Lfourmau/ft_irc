@@ -6,6 +6,21 @@
 
 class user;
 
+enum chan_mode
+{
+	ban,
+	exception,
+	client_limit,
+	invite_only,
+	invite_exception,
+	key,
+	moderated,
+	secret,
+	protected_topic,
+	no_external_messages,
+
+};
+
 class channel
 {
 	public:
@@ -21,12 +36,14 @@ class channel
 		user 				*find_member(std::string nickname);
 		int					send_to_members(std::string msg);
 		void 				print_members();
+		chan_mode 			get_mode();
+		void 				set_mode(chan_mode);
 		std::vector<user*> 	members;
 
 	private:
 		std::string			name;
 		std::string			key;
-		//mode 		chan_mode
+		chan_mode 			mode;
 };
 
 #endif
