@@ -262,7 +262,7 @@ int main ()
 					if (rc == 0)
 					{
 						printf("  Connection closed\n");
-						// TODO: send QUIT
+						my_serv.quit(fds[i].fd);
 						close_conn = true;
 						break;
 					}
@@ -275,8 +275,15 @@ int main ()
 					printf("  %d bytes received\n", len);
 					//parse instead of echo data to the client
 					if (my_serv.find_user(fds[i].fd)->set_command(my_serv.find_user(fds[i].fd)->buff))
-						my_serv.parsing(my_serv.find_user(fds[i].fd)->get_command(), fds[i].fd);
-
+					{
+						if (my_serv.parsing(my_serv.find_user(fds[i].fd)->get_command(), fds[i].fd) == QUIT)
+						{
+							my_serv.quit(fds[i].fd);
+							close_conn = true;
+							break;
+						}
+					}
+				}
 			/*******************************************************/
 			/* If the close_conn flag was turned on, we need       */
 			/* to clean up this active connection. This            */
