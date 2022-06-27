@@ -54,7 +54,6 @@ class server
 		std::string 		get_ip();
 		void				print_channels();
 		void				print_users();
-		void				delete_user(int userFd);
 		std::vector<user*> 	&get_users();
 		std::vector<channel> 	&get_channels();
 		std::vector<std::string>	parsing_join_input(std::string& strings);
