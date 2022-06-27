@@ -19,12 +19,6 @@
 #include "rpl.hpp"
 #include "string_maker.hpp"
 
-enum mode
-{
-	INVITE_ONLY,
-	OTHER_MODE,
-};
-
 class user;
 class channel;
 
