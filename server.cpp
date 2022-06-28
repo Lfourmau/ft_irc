@@ -196,12 +196,6 @@ int server::fin_and_send_kick_rpl(int userFd, std::string chan_name, std::string
 {
 	user *kicker = find_user(userFd);
 
-	if (kicker->get_mode() != 1 || kicker->get_mode() != 2)
-	{
-		std::string rpl_msg = rpl_string(kicker, ERR_CHANOPRIVSNEEDED, "You are not channel operator", chan_name);
-		send(userFd, rpl_msg.data(), rpl_msg.length(), 0);
-		return -1;
-	}
 	if (!channel_exists(chan_name))
 	{
 		std::string rpl_msg = rpl_string(kicker, ERR_NOSUCHCHANNEL, "No such channel", chan_name);
@@ -209,6 +203,12 @@ int server::fin_and_send_kick_rpl(int userFd, std::string chan_name, std::string
 		return -1;
 	}
 	channel &chan = find_channel(chan_name);
+	if (!chan.is_operator(kicker->get_nickname()))
+	{
+		std::string rpl_msg = rpl_string(kicker, ERR_CHANOPRIVSNEEDED, "You are not channel operator", chan_name);
+		send(userFd, rpl_msg.data(), rpl_msg.length(), 0);
+		return -1;
+	}
 	if (!chan.member_exists(nickname))
 	{
 		std::string rpl_msg = rpl_string(kicker, ERR_USERNOTINCHANNEL, "They aren't on that channel", nickname, chan_name);
