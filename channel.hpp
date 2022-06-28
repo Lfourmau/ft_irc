@@ -20,6 +20,7 @@ class channel
 		~channel() {};
 		std::string const 	&get_name() const {return name;};
 		std::string const 	&get_key() const {return key;};
+		std::string			get_mode() const;
 		bool 				member_exists(user member);
 		bool 				member_exists(std::string nickname);
 		int					add_member(user *member);

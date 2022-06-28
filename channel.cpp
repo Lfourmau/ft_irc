@@ -1,5 +1,16 @@
 #include "channel.hpp"
 
+std::string	channel::get_mode() const
+{
+	std::string	ret = "+";
+
+	if (mode[INVITE_ONLY_MODE])
+		ret += "i";
+	if (mode[KEY_MODE])
+		ret += "k";
+	return ret;
+}
+
 bool channel::member_exists(user member)
 {
 	bool ret = false;
