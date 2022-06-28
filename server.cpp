@@ -95,7 +95,12 @@ int server::change_mode(int userFd, std::vector<std::string>& strings)
 		send(userFd, rpl_msg.data(), rpl_msg.length(), 0);
 		return -1; //not a chan operator
 	}
-	if (strings.size() == 3)
+	if (strings.size() == 2)
+	{
+		std::string msg = prefix_user(command_author, RPL_CHANNELMODEIS) + " " + chan.get_name() + " " + chan.get_mode() + "\n";
+		send(userFd, msg.data(), msg.length(), 0);
+	}
+	else if (strings.size() == 3)
 	{
 		if (set_chan_modes(chan, strings[2]))
 		{
