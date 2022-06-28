@@ -34,6 +34,8 @@ class server
 		bool 				channel_exists(std::string chan);
 		int 				join_channel(int userFd, std::vector<std::string> &strings);
 		int 				kick(int userFd, std::vector<std::string>& strings);
+		int 				change_mode(int userFd, std::vector<std::string>& strings);
+		void 				set_chan_modes(channel &chan, std::string modes);
 		int 				part(int userFd, std::vector<std::string>& strings);
 		int 				quit(int userFd);
 		bool 				user_exists(int fd);
