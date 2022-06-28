@@ -51,6 +51,20 @@ int server::parsing(std::string toparse, int userFd)
 /*******************************************************/
 /* MODE STUFF        	                               */
 /*******************************************************/
+int server::change_user_mode(user *command_author, std::vector<std::string>& strings)
+{
+	user* to_promote = find_user(strings[3]);
+	channel &chan = find_channel(strings[1]);
+	if (!chan.member_exists(to_promote->get_nickname()))
+		return -1;
+	if (!strings[2].compare("+o"))
+	{
+		chan.add_operator(to_promote);
+		std::string msg(":" + command_author->get_nickname() + "!~" + command_author->get_username() + "@" + command_author->get_hostname() + " MODE " + chan.get_name() + " " + strings[2] + " " + to_promote->get_nickname() + "\n");
+		chan.send_to_members(msg);
+	}
+	return 0;
+}
 int server::change_mode(int userFd, std::vector<std::string>& strings)
 {
 	if (strings.size() == 3)
@@ -65,7 +79,8 @@ int server::change_mode(int userFd, std::vector<std::string>& strings)
 		std::string msg(":" + command_author->get_nickname() + "!~" + command_author->get_username() + "@" + command_author->get_hostname() + " MODE " + chan.get_name() + " " + strings[2] + "\n");
 		chan.send_to_members(msg);
 	}
-	//else if (strings.size() == 4)
+	else if (strings.size() == 4)
+		change_user_mode(find_user(userFd), strings);
 	return 0;
 }
 int server::invitation(int userFd, std::vector<std::string>& strings)
