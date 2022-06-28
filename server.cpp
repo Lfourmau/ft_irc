@@ -217,16 +217,64 @@ int server::part(int userFd, std::vector<std::string>& strings)
 /*******************************************************/
 int	server::list(int userFd, std::vector<std::string>& strings)
 {
-	// if (strings.size() > 1) {
-	std::string rpl_msg = rpl_string(find_user(userFd), RPL_LISTSTART, "Channel: Users  Name");
-	send(userFd, rpl_msg.data(), rpl_msg.length(), 0);
-	for (size_t i = 0; i < channels.size(); i++)
+	// std::string users;
+	// std::stringstream ss;
+	std::string	msg;
+	user	*lister = find_user(userFd);
+
+	msg = rpl_string(lister, RPL_LISTSTART, "Channel: Users  Name");
+	send(userFd, msg.data(), msg.length(), 0);
+	if (strings.size() > 2)
 	{
-		std::string rpl_msg = rpl_string(find_user(userFd), RPL_LIST, "Channel: Users  Name");
-		send(userFd, rpl_msg.data(), rpl_msg.length(), 0);
+		msg = rpl_string(lister, NOTICE, "Invalid parameters for /LIST");
+		send(userFd, msg.data(), msg.length(), 0);
 	}
-	
-	// }
+	else
+	{
+		if (strings.size() == 2 && !strings[1].empty())
+		{
+			std::vector<std::string>	chan_list = split_string(strings[1], ',');
+			for (size_t i = 0; i < chan_list.size(); i++)
+			{
+				if (channel_exists(chan_list[i]))
+				{
+					channel	chan = find_channel(chan_list[i]);
+					std::string users;
+					std::stringstream ss;
+					ss << chan.members.size();
+					users = ss.str();
+					msg = prefix_user(lister, RPL_LIST) + " " + chan.get_name() + " " + users;
+					// if (!channels[i].get_topic().empty())
+					//  	msg += " :" + "TOPIC HERE";
+					// else
+					msg += "\n";
+				}
+				else
+					msg = rpl_string(lister, ERR_NOSUCHCHANNEL, "No such channel", chan_list[i]);
+				send(userFd, msg.data(), msg.length(), 0);
+			}
+		}
+		else
+		{
+			for (size_t i = 0; i < channels.size(); i++)
+			{
+				//NEED TO CHANGE TOPIC CHECK WHEN IMPLEMENTED (ideally a string topic on channel)
+				std::string users;
+				std::stringstream ss;
+				ss << channels[i].members.size();
+				users = ss.str();
+				msg = prefix_user(lister, RPL_LIST) + " " + channels[i].get_name() + " " + users;
+				// if (!channels[i].get_topic().empty())
+				//  	msg += " :" + "TOPIC HERE";
+				// else
+				msg += "\n";
+				// std::string msg = prefix_user(command_author, RPL_CHANNELMODEIS) + " " + chan.get_name() + " " + chan.get_mode() + "\n";
+				send(userFd, msg.data(), msg.length(), 0);
+			}
+		}
+	}
+	msg = rpl_string(lister, RPL_LISTEND, "End of /LIST");
+	send(userFd, msg.data(), msg.length(), 0);
 	return 0;
 }
 
