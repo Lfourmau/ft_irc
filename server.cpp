@@ -89,7 +89,7 @@ int server::change_mode(int userFd, std::vector<std::string>& strings)
 		return -1; //channel does not exists
 	}
 	channel &chan = find_channel(strings[1]);
-	if (!chan.is_operator(command_author->get_nickname()))
+	if (!chan.is_operator(command_author->get_nickname()) && strings.size() >= 3)
 	{
 		std::string rpl_msg = rpl_string(command_author, ERR_CHANOPRIVSNEEDED, "You're not channel operator", chan.get_name());
 		send(userFd, rpl_msg.data(), rpl_msg.length(), 0);

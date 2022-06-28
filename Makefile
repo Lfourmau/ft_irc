@@ -26,7 +26,7 @@ $(NAME) : $(OBJS) main.cpp
 	$(CXX) $(CXXFLAGS) -o ${NAME} main.cpp $(OBJS)
 
 run : $(NAME)
-	./$(NAME) 
+	./$(NAME) 6667 pizza
 
 clean : 
 	rm -f $(OBJS)
