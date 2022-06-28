@@ -31,6 +31,8 @@ int server::parsing(std::string toparse, int userFd)
 			find_user(userFd)->my_register(strings);
 		else if (!strings[0].compare("PRIVMSG"))
 			send_privmsg(userFd, strings);
+		else if (!strings[0].compare("NOTICE"))
+			send_notice(userFd, strings);
 		else if (!strings[0].compare("KICK"))
 			kick(userFd, strings);
 		else if (!strings[0].compare("MODE"))
@@ -429,9 +431,9 @@ int	server::no_recipient_or_text(int userFd, std::vector<std::string> strings)
 	}
 	return 0;
 }
-std::string server::build_privmsg(int userFd, std::vector<std::string> strings, std::string recipient)
+std::string server::build_privmsg(int userFd, std::vector<std::string> strings, std::string recipient, std::string message_type)
 {
-	std::string msg(":" + find_user(userFd)->get_nickname() + "!~" + find_user(userFd)->get_username() + "@" + find_user(userFd)->get_hostname() + " PRIVMSG " + recipient);
+	std::string msg(":" + find_user(userFd)->get_nickname() + "!~" + find_user(userFd)->get_username() + "@" + find_user(userFd)->get_hostname() + message_type + recipient);
 	//i = 2 because 0and 1 are the command and the recipient
 	for (size_t i = 2; i < strings.size(); i++)
 	{
@@ -441,16 +443,18 @@ std::string server::build_privmsg(int userFd, std::vector<std::string> strings, 
 	msg += "\n";
 	return msg;
 }
-int server::send_message_to_channel(int userFd, std::string &recipient, std::string msg)
+int server::send_message_to_channel(int userFd, std::string &recipient, std::string msg, message_type type)
 {
 	channel &chan = find_channel(recipient);
 	if (!chan.member_exists(*(find_user(userFd))))
 	{
-		std::string rpl_message(rpl_string(find_user(userFd), ERR_CANNOTSENDTOCHAN, "Cannot send to channel", recipient));
-		if (send(userFd, rpl_message.data(), rpl_message.length(), 0) < 0)
-		{
-			perror(" Send failed()");
-			return -1;
+		if (type == PRIVMSG)
+		{	std::string rpl_message(rpl_string(find_user(userFd), ERR_CANNOTSENDTOCHAN, "Cannot send to channel", recipient));
+			if (send(userFd, rpl_message.data(), rpl_message.length(), 0) < 0)
+			{
+				perror(" Send failed()");
+				return -1;
+			}
 		}
 		return 0;
 	}
@@ -503,8 +507,24 @@ int server::send_privmsg(int userFd, std::vector<std::string> &strings)
 			}
 			continue; //send rpl and continue to the next recipient
 		}
-		std::string msg = build_privmsg(userFd, strings, *it);
-		if (channel_exists(*it) && send_message_to_channel(userFd, *it, msg) < 0)
+		std::string msg = build_privmsg(userFd, strings, *it, std::string(" PRIVMSG "));
+		if (channel_exists(*it) && send_message_to_channel(userFd, *it, msg, PRIVMSG) < 0)
+			return -1; //send failed, continue to next loop ?
+		else if (user_exists(*it) && send_message_to_user(*it, msg) < 0)
+			return -1;//send failed, continue to next loop ?
+	}
+	
+	return 0;
+}
+int server::send_notice(int userFd, std::vector<std::string> &strings)
+{
+	if (strings.size() < 3)
+		return -1; //not enough params
+	std::vector<std::string> recipients = split_string(strings[1], ',');
+	for (std::vector<std::string>::iterator it = recipients.begin(); it != recipients.end(); it++)
+	{
+		std::string msg = build_privmsg(userFd, strings, *it, std::string(" NOTICE "));
+		if (channel_exists(*it) && send_message_to_channel(userFd, *it, msg, NOTICE) < 0)
 			return -1; //send failed, continue to next loop ?
 		else if (user_exists(*it) && send_message_to_user(*it, msg) < 0)
 			return -1;//send failed, continue to next loop ?

@@ -23,6 +23,12 @@
 class user;
 class channel;
 
+enum message_type
+{
+	PRIVMSG,
+	NOTICE,
+};
+
 class server
 {
 	public:
@@ -49,10 +55,11 @@ class server
 		user 				*find_user(std::string nickname);
 		int					no_recipient_or_text(int userFd, std::vector<std::string> strings);
 		int 				send_privmsg(int userFd, std::vector<std::string> &cmd);
-		int 				send_message_to_channel(int userFd, std::string &recipient, std::string msg);
+		int 				send_message_to_channel(int userFd, std::string &recipient, std::string msg, message_type type);
 		int 				send_message_to_user(std::string &recipient, std::string msg);
-		std::string 		build_privmsg(int userfd, std::vector<std::string> strings, std::string recipient);
+		std::string 		build_privmsg(int userfd, std::vector<std::string> strings, std::string recipient, std::string message_type);
 		int					send_welcome(int userFd);
+		int 				send_notice(int userFd, std::vector<std::string> &strings);
 		int					send_join_notif(std::string msg, std::string name);
 		int 				send_join_rpl(std::string channel_name, int userFd);
 		int 				fin_and_send_kick_rpl(int userFd, std::string chan_name, std::string nickname);
