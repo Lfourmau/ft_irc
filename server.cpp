@@ -419,6 +419,7 @@ int server::join_channel(int userFd, std::vector<std::string> &strings)
 {
 	std::vector<std::string> channels = split_string(strings[1], ',');
 	user *user_to_add = find_user(userFd);
+	std::string set_creator_op_msg;
 
 	for (std::vector<std::string>::iterator it = channels.begin(); it != channels.end(); ++it)
 	{
@@ -432,6 +433,7 @@ int server::join_channel(int userFd, std::vector<std::string> &strings)
 		{
 			create_channel(*it, "fake_key");
 			find_channel(*it).add_operator(user_to_add);
+			set_creator_op_msg = ":" + user_to_add->get_nickname() + "!~" + user_to_add->get_username() + "@" + user_to_add->get_hostname() + " MODE " + *it + " +o " + user_to_add->get_nickname() + "\n";
 		}
 		if (!find_channel(*it).member_exists(user_to_add->get_nickname()))
 		{
@@ -444,6 +446,8 @@ int server::join_channel(int userFd, std::vector<std::string> &strings)
 			find_channel(*it).add_member(user_to_add);
 			if (send_join_rpl(*it, userFd) < 0)
 				return -1;
+			if (!set_creator_op_msg.empty())
+				send(userFd, set_creator_op_msg.data(), set_creator_op_msg.length(), 0);	
 		}
 	}
 	return 0;
