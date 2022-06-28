@@ -33,6 +33,8 @@ int server::parsing(std::string toparse, int userFd)
 			kick(userFd, strings);
 		else if (!strings[0].compare("PART"))
 			part(userFd, strings);
+		else if (!strings[0].compare("PING"))
+			pong(userFd, strings);
 		else if (!strings[0].compare("QUIT"))
 			return QUIT;
 		toparse.erase(toparse.begin(), toparse.begin() + sep + 2);
@@ -94,6 +96,18 @@ int server::part(int userFd, std::vector<std::string>& strings)
 	return 0;
 }
 
+/*******************************************************/
+/* PONG STUFF        	                               */
+/*******************************************************/
+int	server::pong(int userFd, std::vector<std::string>& strings)
+{
+	if (strings.size() > 1 && strings[1].length()) {
+		std::string msg(":server PONG server :" + strings[1] + "\n");
+		send(userFd, msg.data(), msg.length(), 0);
+		return 0;
+	}
+	return -1;
+}
 
 /*******************************************************/
 /* KICK STUFF        	                               */

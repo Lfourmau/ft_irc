@@ -36,3 +36,4 @@ server
 *.swp
 
 *.dSYM
+.vscode
