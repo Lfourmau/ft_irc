@@ -35,6 +35,16 @@ user *channel::find_member(std::string nickname)
 }
 
 
+int channel::add_operator(user *member)
+{
+	if (is_operator(member->get_nickname()))
+	{
+		std::cout << "user exists" << std::endl;
+		return 1;
+	}
+	this->operators.push_back(member);
+	return 0;
+}
 int channel::add_member(user *member)
 {
 	if (member_exists(*member))
@@ -75,11 +85,18 @@ int	channel::send_to_members(std::string msg)
 	}
 	return 0;
 }
-
-void		channel::set_mode(chan_mode mode_to_set) { this->mode = mode_to_set; }
-chan_mode 	channel::get_mode() { return this->mode ;}
 void channel::print_members()
 {
 	for (std::vector<user*>::iterator it = this->members.begin(); it != this->members.end(); ++it)
 		std::cout << "User in channel {" << this->name << "} = " << (*it)->get_fd() << "---" << (*it)->get_nickname() << std::endl;
+}
+
+bool		channel::is_operator(std::string nickname)
+{
+	for (std::vector<user*>::iterator it = this->operators.begin(); it != this->operators.end(); ++it)
+	{
+		if ((*it)->get_nickname() == nickname)
+			return true;
+	}
+	return false;
 }

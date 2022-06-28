@@ -8,17 +8,8 @@ class user;
 
 enum chan_mode
 {
-	BAN_MODE,
-	EXCPTION_MODE,
-	CLIENT_LIMIT_MODE,
 	INVITE_ONLY_MODE,
-	INVITE_EXCEPTION_MODE,
 	KEY_MODE,
-	MODERATED_MODE,
-	SECRET_MODE,
-	PROTECTED_TOPIC_MODE,
-	NO_EXTERNAL_MESSAGES_MODE,
-
 };
 
 class channel
@@ -33,18 +24,18 @@ class channel
 		bool 				member_exists(std::string nickname);
 		int					add_member(user *member);
 		int					remove_member(user *member);
-		
 		user 				*find_member(std::string nickname);
 		int					send_to_members(std::string msg);
+		bool				is_operator(std::string nickname);
+		int 				add_operator(user *member);
 		void 				print_members();
-		chan_mode 			get_mode();
-		void 				set_mode(chan_mode);
 		std::vector<user*> 	members;
+		std::vector<user*> 	operators;
+		bool 				mode[2];
 
 	private:
 		std::string			name;
 		std::string			key;
-		chan_mode 			mode;
 };
 
 #endif

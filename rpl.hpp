@@ -13,7 +13,9 @@
 #define ERR_USERNOTINCHANNEL " 441 "
 #define ERR_NOTONCHANNEL " 442 "
 #define ERR_CHANOPRIVSNEEDED " 482 "
+#define ERR_INVITEONLYCHAN " 473 "
 
+#define RPL_INVITING			" 341 "
 #define RPL_NAMREPLY			" 353 "
 #define RPL_ENDOFNAMES			" 366 "
 

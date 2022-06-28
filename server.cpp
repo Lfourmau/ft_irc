@@ -31,8 +31,14 @@ int server::parsing(std::string toparse, int userFd)
 			send_privmsg(userFd, strings);
 		else if (!strings[0].compare("KICK"))
 			kick(userFd, strings);
+		else if (!strings[0].compare("MODE"))
+			change_mode(userFd, strings);
+		else if (!strings[0].compare("INVITE"))
+			invitation(userFd, strings);
 		else if (!strings[0].compare("PART"))
 			part(userFd, strings);
+		else if (!strings[0].compare("PING"))
+			pong(userFd, strings);
 		else if (!strings[0].compare("QUIT"))
 			return QUIT;
 		toparse.erase(toparse.begin(), toparse.begin() + sep + 2);
@@ -44,6 +50,82 @@ int server::parsing(std::string toparse, int userFd)
 	return 0;
 }
 
+/*******************************************************/
+/* MODE STUFF        	                               */
+/*******************************************************/
+int server::change_user_mode(user *command_author, std::vector<std::string>& strings)
+{
+	user* to_promote = find_user(strings[3]);
+	channel &chan = find_channel(strings[1]);
+	if (!to_promote || !chan.member_exists(to_promote->get_nickname()))
+		return -1;
+	if (!strings[2].compare("+o"))
+	{
+		chan.add_operator(to_promote);
+		std::string msg(":" + command_author->get_nickname() + "!~" + command_author->get_username() + "@" + command_author->get_hostname() + " MODE " + chan.get_name() + " " + strings[2] + " " + to_promote->get_nickname() + "\n");
+		chan.send_to_members(msg);
+	}
+	return 0;
+}
+int server::change_mode(int userFd, std::vector<std::string>& strings)
+{
+	if (strings.size() == 3)
+	{
+		user *command_author = find_user(userFd);
+		if (!channel_exists(strings[1]))
+			return -1; //channel does not exists
+		channel &chan = find_channel(strings[1]);
+		if (!chan.is_operator(command_author->get_nickname()))
+			return -1; //not a chan operator
+		set_chan_modes(chan, strings[2]);
+		std::string msg(":" + command_author->get_nickname() + "!~" + command_author->get_username() + "@" + command_author->get_hostname() + " MODE " + chan.get_name() + " " + strings[2] + "\n");
+		chan.send_to_members(msg);
+	}
+	else if (strings.size() == 4)
+		change_user_mode(find_user(userFd), strings);
+	return 0;
+}
+int server::invitation(int userFd, std::vector<std::string>& strings)
+{
+	std::string chan_name = strings[2];
+	std::string invited_user = strings[1];
+	if (!channel_exists(strings[2]))
+		return -1; //return rpl channel does not exists
+	user *invited = find_user(invited_user);
+	user *member = find_user(userFd);
+
+
+	invited->add_invitation(chan_name);
+	std::string invited_msg(":" + member->get_nickname() + "!~" + member->get_username() + "@" + member->get_hostname() + " INVITE " + invited->get_nickname() + " :" + chan_name + "\n");
+	send(invited->get_fd(), invited_msg.data(), invited_msg.length(), 0);
+	std::string member_msg(":" + member->get_nickname() + "!~" + member->get_username() + "@" + member->get_hostname() + RPL_INVITING + member->get_nickname() + " " + invited->get_nickname() + " " + chan_name + "\n");
+	send(member->get_fd(), member_msg.data(), member_msg.length(), 0);
+	return 0;
+}
+void server::set_chan_modes(channel &chan, std::string modes)
+{
+	for (size_t i = 0; i < modes.size(); i++)
+	{
+		if (modes[0] == '+')
+		{
+			if (modes[i] == 'i')
+			{
+				chan.mode[INVITE_ONLY_MODE] = true;
+				std::cout << "SET TO TRUE" << std::endl;
+			}
+			else if (modes[i] == 'k')
+				chan.mode[KEY_MODE] = true;
+		}
+		if (modes[0] == '-')
+		{
+			if (modes[i] == 'i')
+				chan.mode[INVITE_ONLY_MODE] = false;
+			else if (modes[i] == 'k')
+				chan.mode[KEY_MODE] = false;
+		}
+	}
+	
+}
 /*******************************************************/
 /* QUIT STUFF        	                               */
 /*******************************************************/
@@ -94,6 +176,18 @@ int server::part(int userFd, std::vector<std::string>& strings)
 	return 0;
 }
 
+/*******************************************************/
+/* PONG STUFF        	                               */
+/*******************************************************/
+int	server::pong(int userFd, std::vector<std::string>& strings)
+{
+	if (strings.size() > 1 && strings[1].length()) {
+		std::string msg(":server PONG server :" + strings[1] + "\n");
+		send(userFd, msg.data(), msg.length(), 0);
+		return 0;
+	}
+	return -1;
+}
 
 /*******************************************************/
 /* KICK STUFF        	                               */
@@ -165,9 +259,18 @@ int server::join_channel(int userFd, std::vector<std::string> &strings)
 			return -1;
 		}
 		if (!channel_exists(*it))
+		{
 			create_channel(*it, "fake_key");
+			find_channel(*it).add_operator(user_to_add);
+		}
 		if (!find_channel(*it).member_exists(user_to_add->get_nickname()))
 		{
+			if (find_channel(*it).mode[INVITE_ONLY_MODE] && !user_to_add->is_invited(*it))
+			{
+				std::string rpl_msg = rpl_string(user_to_add, ERR_INVITEONLYCHAN, "Cannot join channel (+i)", *it);
+				send(userFd, rpl_msg.data(), rpl_msg.length(), 0);
+				return -1;
+			}
 			find_channel(*it).add_member(user_to_add);
 			if (send_join_rpl(*it, userFd) < 0)
 				return -1;
@@ -249,6 +352,19 @@ user* server::find_user(int userFd)
 	for (std::vector<user*>::iterator it = this->users.begin(); it != this->users.end(); ++it)
 	{
 		if ((*it)->get_fd() == userFd)
+		{
+			ret = (*it);
+			break;
+		}
+	}
+	return (ret);
+}
+user* server::find_user(std::string nickname)
+{
+	user* ret = NULL;
+	for (std::vector<user*>::iterator it = this->users.begin(); it != this->users.end(); ++it)
+	{
+		if ((*it)->get_nickname() == nickname)
 		{
 			ret = (*it);
 			break;
