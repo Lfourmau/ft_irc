@@ -47,6 +47,8 @@ class server
 		int 				part(int userFd, std::vector<std::string>& strings);
 		int					list(int userFd, std::vector<std::string>& strings);
 		int					pong(int userFd, std::vector<std::string>& strings);
+		int 				topic(int userFd, std::vector<std::string>& strings);
+		void				set_topic(int userFd, channel &chan, std::vector<std::string> strings);
 		int 				quit(int userFd);
 		bool 				user_exists(int fd);
 		bool				user_exists(std::string name);

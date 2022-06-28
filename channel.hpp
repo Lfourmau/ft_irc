@@ -15,7 +15,7 @@ enum chan_mode
 class channel
 {
 	public:
-		channel(std::string id, std::string password = NULL) : name(id), key(password) {};
+		channel(std::string id, std::string password = NULL) : name(id), key(password), topic("") {};
 		channel() : name("NULL") {};
 		~channel() {};
 		std::string const 	&get_name() const {return name;};
@@ -31,6 +31,8 @@ class channel
 		bool				is_operator(std::string nickname);
 		int 				add_operator(user *member);
 		void 				print_members();
+		void 				set_topic(std::string new_topic);
+		std::string			&get_topic();
 		std::vector<user*> 	members;
 		std::vector<user*> 	operators;
 		bool 				mode[2];
@@ -38,6 +40,7 @@ class channel
 	private:
 		std::string			name;
 		std::string			key;
+		std::string 		topic;
 };
 
 #endif
