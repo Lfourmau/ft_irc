@@ -131,12 +131,12 @@ int server::kick(int userFd, std::vector<std::string>& strings)
 	if (fin_and_send_kick_rpl(userFd, chan_name, nickname))
 		return -1;
 	channel &chan = find_channel(chan_name);
-	chan.remove_member(chan.find_member(nickname));
 	if (strings.size() >= 4)
 		for (size_t i = 3; i < strings.size(); ++i)
 			reason.append(strings[i] + " ");
 	std::string msg(":" + find_user(userFd)->get_nickname() + " KICK " + chan_name + " " + nickname + " :" + reason + "\n");
 	chan.send_to_members(msg);
+	chan.remove_member(chan.find_member(nickname));
 	return 0;
 }
 
