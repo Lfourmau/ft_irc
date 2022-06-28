@@ -1,4 +1,4 @@
-NAME = server
+NAME = ircserv
 
 INC = 	server.hpp \
 		channel.hpp \

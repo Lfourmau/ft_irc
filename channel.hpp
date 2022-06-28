@@ -25,6 +25,7 @@ class channel
 		int					add_member(user *member);
 		int					remove_member(user *member);
 		user 				*find_member(std::string nickname);
+		user 				*find_member(int userFd);
 		int					send_to_members(std::string msg);
 		bool				is_operator(std::string nickname);
 		int 				add_operator(user *member);

@@ -30,7 +30,7 @@
 *.exe
 *.out
 *.app
-server
+ircserv
 
 #vim
 *.swp

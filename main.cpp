@@ -3,20 +3,28 @@
 
 #include <fcntl.h>
 
-#define SERVER_PORT  6667
-using namespace std;
-
-int main ()
+int main ( int argc, char **argv )
 {
 	int    len, rc, on = 1;
 	int    listen_sd = -1, new_sd = -1;
 	bool   end_server = false, compress_array = false;
 	int    close_conn;
 	struct sockaddr_in6   addr;
-	vector<struct pollfd> fds;
+	std::vector<struct pollfd> fds;
 	int    timeout;
 
-	server my_serv("pass");
+	if (argc != 3) {
+		std::cerr << "Usage: ./ircserv <port> <password>" << std::endl;
+		exit(-1);
+	}
+
+	int server_port = parse_port(std::string(argv[1]));
+	if (server_port == INVALID_PORT_NUMBER) {
+		std::cerr << "Invalid port number" << std::endl;
+		exit(-1);
+	}
+
+	server my_serv(server_port, std::string(argv[2]));
 
 	/*************************************************************/
 	/* Create an AF_INET6 stream socket to receive incoming      */
@@ -48,7 +56,7 @@ int main ()
 	rc = fcntl(listen_sd, F_SETFL, O_NONBLOCK);
 	if (rc < 0)
 	{
-		perror("ioctl() failed");
+		perror("fcntl() failed");
 		close(listen_sd);
 		exit(-1);
 	}
@@ -56,18 +64,10 @@ int main ()
 	/*************************************************************/
 	/* Bind the socket                                           */
 	/*************************************************************/
-	/*
-	memset(&addr, 0, sizeof(addr));
-	addr.sin6_family = AF_INET6;
-	memcpy(&addr.sin6_addr, &in6addr_any, sizeof(in6addr_any));
-	addr.sin6_addr = INADDR_ANY;
-	addr.sin6_port = htons(SERVER_PORT);
-	rc = bind(listen_sd, (struct sockaddr *)&addr, sizeof(addr));
-	*/
 	addr.sin6_len = sizeof(addr);
 	addr.sin6_family = AF_INET6;
 	addr.sin6_flowinfo = 0;
-	addr.sin6_port = htons(SERVER_PORT);
+	addr.sin6_port = htons(my_serv.get_port());
 	addr.sin6_addr = in6addr_any; //global variable
 	rc = bind(listen_sd, (struct sockaddr *)&addr, sizeof(addr));
 
@@ -118,7 +118,9 @@ int main ()
 		/***********************************************************/
 		/* Call poll() and wait 3 minutes for it to complete.      */
 		/***********************************************************/
-		printf("Waiting on poll()...\n");
+		std::cout << "Waiting on poll()... listening on port ";
+		std::cout << my_serv.get_port() << ", with key " << my_serv.get_password() << std::endl;
+
 		rc = poll(&fds[0], fds.size(), timeout);
 
 		/***********************************************************/
@@ -135,7 +137,7 @@ int main ()
 		/***********************************************************/
 		if (rc == 0)
 		{
-			printf("  poll() timed out.  End program.\n");
+			std::cout << "  poll() timed out.  End program." << std::endl;
 			break;
 		}
 
@@ -169,7 +171,7 @@ int main ()
 				/*******************************************************/
 				/* Listening descriptor is readable.                   */
 				/*******************************************************/
-				printf("  Listening socket is readable\n");
+				std::cout << "  Listening socket is readable" << std::endl;
 
 				/*******************************************************/
 				/* Accept all incoming connections that are            */
@@ -205,7 +207,7 @@ int main ()
 					/* Add the new incoming connection to the            */
 					/* pollfd structure                                  */
 					/*****************************************************/
-					printf("  New incoming connection - %d\n", new_sd);
+					std::cout << " New incoming connection - " << new_sd << std::endl;
 					struct pollfd add_connect;
 					add_connect.fd = new_sd;
 					add_connect.events = POLLIN;
@@ -226,7 +228,7 @@ int main ()
 
 			else
 			{
-				printf("  Descriptor %d is readable\n", fds[i].fd);
+				std::cout << "   Descriptor " << fds[i].fd << " is readable" << std::endl;
 				close_conn = false;
 				/*******************************************************/
 				/* Receive all incoming data on this socket            */
@@ -261,7 +263,7 @@ int main ()
 					/*****************************************************/
 					if (rc == 0)
 					{
-						printf("  Connection closed\n");
+						std::cout << "  Connection closed" << std::endl;
 						my_serv.quit(fds[i].fd);
 						close_conn = true;
 						break;
@@ -272,7 +274,7 @@ int main ()
 					/* Parsing changes                                   */
 					/*****************************************************/
 					len = rc;
-					printf("  %d bytes received\n", len);
+					std::cout << "  " << len << " bytes received" << std::endl;
 					//parse instead of echo data to the client
 					if (my_serv.find_user(fds[i].fd)->set_command(my_serv.find_user(fds[i].fd)->buff))
 					{
@@ -311,9 +313,8 @@ int main ()
 		
 		if (compress_array)
 		{
-			std::cout << " in compress array\n";
 			compress_array = false;
-			for (vector<struct pollfd>::iterator it = fds.begin(); it != fds.end(); ++it)
+			for (std::vector<struct pollfd>::iterator it = fds.begin(); it != fds.end(); ++it)
 			{
 				if (it->fd == -1)
 					fds.erase(it--);
@@ -325,7 +326,7 @@ int main ()
 	/*************************************************************/
 	/* Clean up all of the sockets that are open                 */
 	/*************************************************************/
-	for (vector<struct pollfd>::iterator it = fds.begin(); it != fds.end(); it++)
+	for (std::vector<struct pollfd>::iterator it = fds.begin(); it != fds.end(); it++)
 	{
 		if ((*it).fd >= 0)
 			close((*it).fd);

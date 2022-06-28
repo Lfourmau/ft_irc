@@ -1,5 +1,7 @@
 #include "server.hpp"
 
+server::server(int port, std::string key ) : port(port), password(key), ip("10.1.8.2") {} 
+
 server::~server()
 {
 	for (std::vector<user*>::iterator it = users.begin(); it != users.end(); ++it)
@@ -135,10 +137,10 @@ int server::quit(int userFd)
 	std::string msg(":" + user_to_quit->get_nickname() + "!~" + user_to_quit->get_username() + "@" + user_to_quit->get_hostname() + " QUIT :Client quit\n");
 	for (std::vector<channel>::iterator chan = channels.begin(); chan != channels.end(); ++chan)
 	{
-		if (chan->member_exists(user_to_quit->get_nickname()))
+		if (chan->member_exists(*user_to_quit))
 		{
 			chan->send_to_members(msg);
-			chan->remove_member(chan->find_member(user_to_quit->get_nickname()));
+			chan->remove_member(chan->find_member(user_to_quit->get_fd()));
 		}
 	}
 	this->remove_user(user_to_quit);
@@ -528,7 +530,7 @@ int server::remove_user(user *user_to_remove)
 	}
 	for (std::vector<user*>::iterator it = this->users.begin(); it != this->users.end(); ++it)
 	{
-		if ((*it)->get_nickname() == user_to_remove->get_nickname())
+		if ((*it)->get_fd() == user_to_remove->get_fd())
 		{
 			delete (*it);
 			this->users.erase(it);
@@ -543,6 +545,8 @@ int server::remove_user(user *user_to_remove)
 std::string server::get_ip() { return this->ip; }
 std::vector<user*> &server::get_users() { return this->users; }
 std::vector<channel> &server::get_channels() { return this->channels; }
+const int					&server::get_port() const { return this->port; }
+const std::string			&server::get_password() const { return this->password; }
 
 
 /*******************************************************/

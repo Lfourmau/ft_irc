@@ -34,3 +34,13 @@ std::vector<std::string>	split_string( std::string& str_to_split, char separator
 	return ret_vec;
 }
 
+int		parse_port(std::string str) {
+	std::stringstream ss;
+	int port;
+
+	ss << str;
+	ss >> port;
+	if (port < PORT_NUMBER_INF || port > PORT_NUMBER_SUP)
+		port = INVALID_PORT_NUMBER;
+	return (port);
+}
