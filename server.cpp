@@ -55,10 +55,10 @@ int server::quit(int userFd)
 	std::string msg(":" + user_to_quit->get_nickname() + "!~" + user_to_quit->get_username() + "@" + user_to_quit->get_hostname() + " QUIT :Client quit\n");
 	for (std::vector<channel>::iterator chan = channels.begin(); chan != channels.end(); ++chan)
 	{
-		if (chan->member_exists(user_to_quit->get_nickname()))
+		if (chan->member_exists(*user_to_quit))
 		{
 			chan->send_to_members(msg);
-			chan->remove_member(chan->find_member(user_to_quit->get_nickname()));
+			chan->remove_member(chan->find_member(user_to_quit->get_fd()));
 		}
 	}
 	this->remove_user(user_to_quit);
@@ -414,8 +414,9 @@ int server::remove_user(user *user_to_remove)
 	}
 	for (std::vector<user*>::iterator it = this->users.begin(); it != this->users.end(); ++it)
 	{
-		if ((*it)->get_nickname() == user_to_remove->get_nickname())
+		if ((*it)->get_fd() == user_to_remove->get_fd())
 		{
+			std::cout << "in remove_user(), freeing " << *it << std::endl;
 			delete (*it);
 			this->users.erase(it);
 			break;

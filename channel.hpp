@@ -35,6 +35,7 @@ class channel
 		int					remove_member(user *member);
 		
 		user 				*find_member(std::string nickname);
+		user 				*find_member(int userFd);
 		int					send_to_members(std::string msg);
 		void 				print_members();
 		chan_mode 			get_mode();

@@ -20,6 +20,7 @@ bool channel::member_exists(std::string nickname)
 	}
 	return ret;
 }
+
 user *channel::find_member(std::string nickname)
 {
 	user* ret = NULL;
@@ -34,6 +35,19 @@ user *channel::find_member(std::string nickname)
 	return (ret);
 }
 
+user *channel::find_member(int userFd)
+{
+	user* ret = NULL;
+	for (std::vector<user*>::iterator it = this->members.begin(); it != this->members.end(); ++it)
+	{
+		if ((*it)->get_fd() == userFd)
+		{
+			ret = (*it);
+			break;
+		}
+	}
+	return (ret);
+}
 
 int channel::add_member(user *member)
 {

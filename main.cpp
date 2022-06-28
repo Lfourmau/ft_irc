@@ -7,6 +7,8 @@
 
 using namespace std;
 
+void	print_fds( vector<struct pollfd>& fds );
+
 int main ( int argc, char **argv )
 {
 	int    len, rc, on = 1;
@@ -71,7 +73,7 @@ int main ( int argc, char **argv )
 	addr.sin6_len = sizeof(addr);
 	addr.sin6_family = AF_INET6;
 	addr.sin6_flowinfo = 0;
-	addr.sin6_port = htons(SERVER_PORT);
+	addr.sin6_port = htons(my_serv.get_port());
 	addr.sin6_addr = in6addr_any; //global variable
 	rc = bind(listen_sd, (struct sockaddr *)&addr, sizeof(addr));
 
@@ -175,7 +177,7 @@ int main ( int argc, char **argv )
 				/*******************************************************/
 				/* Listening descriptor is readable.                   */
 				/*******************************************************/
-				printf("  Listening socket is readable\n");
+				std::cout << "  Listening socket is readable" << std::endl;
 
 				/*******************************************************/
 				/* Accept all incoming connections that are            */
@@ -248,6 +250,11 @@ int main ( int argc, char **argv )
 					/* failure occurs, we will close the                 */
 					/* connection.                                       */
 					/*****************************************************/
+
+					print_fds( fds );
+					std::cout << "in while(true), i= " << i << ", fds[i].fd= " << fds[i].fd << ", fds.size()= " << fds.size() << std::endl;
+				//	std::cout << "address of buffer = " << &(my_serv.find_user(fds[i].fd)->buff) << std::endl;
+					std::cout << "address of user = " << (my_serv.find_user(fds[i].fd)) << std::endl;
 					memset(my_serv.find_user(fds[i].fd)->buff, 0, 80);
 					rc = recv(fds[i].fd, my_serv.find_user(fds[i].fd)->buff, sizeof(my_serv.find_user(fds[i].fd)->buff), 0);
 					std::cout << "{" << my_serv.find_user(fds[i].fd)->buff << "}" << std::endl;
@@ -338,4 +345,12 @@ int main ( int argc, char **argv )
 	}
 	fds.clear();
 	return 0;
+}
+
+void	print_fds( vector<struct pollfd>& fds ) {
+
+	std::cout << "vector fds: [";
+	for (vector<struct pollfd>::iterator it = fds.begin(); it != fds.end(); ++it)
+		std::cout << it->fd << " ";
+	std::cout << "]" << std::endl;
 }
