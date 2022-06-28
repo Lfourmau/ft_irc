@@ -117,6 +117,8 @@ void server::set_topic(int userFd, channel &chan, std::vector<std::string> strin
 			new_topic.append(" ");
 	}
 	new_topic.append("\n");
+	if (!new_topic.compare("::\n"))
+		new_topic = "";
 	chan.set_topic(new_topic);
 	std::string msg(":" + modifier->get_nickname() + "!~" + modifier->get_username() + "@" + modifier->get_hostname() + " TOPIC " + chan.get_name() + " " + new_topic + "\n");
 	chan.send_to_members(msg);
