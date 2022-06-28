@@ -416,7 +416,6 @@ int server::remove_user(user *user_to_remove)
 	{
 		if ((*it)->get_fd() == user_to_remove->get_fd())
 		{
-			std::cout << "in remove_user(), freeing " << *it << std::endl;
 			delete (*it);
 			this->users.erase(it);
 			break;

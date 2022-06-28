@@ -3,12 +3,6 @@
 
 #include <fcntl.h>
 
-#define SERVER_PORT  6667
-
-using namespace std;
-
-void	print_fds( vector<struct pollfd>& fds );
-
 int main ( int argc, char **argv )
 {
 	int    len, rc, on = 1;
@@ -16,7 +10,7 @@ int main ( int argc, char **argv )
 	bool   end_server = false, compress_array = false;
 	int    close_conn;
 	struct sockaddr_in6   addr;
-	vector<struct pollfd> fds;
+	std::vector<struct pollfd> fds;
 	int    timeout;
 
 	if (argc != 3) {
@@ -62,7 +56,7 @@ int main ( int argc, char **argv )
 	rc = fcntl(listen_sd, F_SETFL, O_NONBLOCK);
 	if (rc < 0)
 	{
-		perror("ioctl() failed");
+		perror("fcntl() failed");
 		close(listen_sd);
 		exit(-1);
 	}
@@ -143,7 +137,7 @@ int main ( int argc, char **argv )
 		/***********************************************************/
 		if (rc == 0)
 		{
-			printf("  poll() timed out.  End program.\n");
+			std::cout << "  poll() timed out.  End program." << std::endl;
 			break;
 		}
 
@@ -213,7 +207,7 @@ int main ( int argc, char **argv )
 					/* Add the new incoming connection to the            */
 					/* pollfd structure                                  */
 					/*****************************************************/
-					printf("  New incoming connection - %d\n", new_sd);
+					std::cout << " New incoming connection - " << new_sd << std::endl;
 					struct pollfd add_connect;
 					add_connect.fd = new_sd;
 					add_connect.events = POLLIN;
@@ -234,7 +228,7 @@ int main ( int argc, char **argv )
 
 			else
 			{
-				printf("  Descriptor %d is readable\n", fds[i].fd);
+				std::cout << "   Descriptor " << fds[i].fd << " is readable" << std::endl;
 				close_conn = false;
 				/*******************************************************/
 				/* Receive all incoming data on this socket            */
@@ -250,11 +244,6 @@ int main ( int argc, char **argv )
 					/* failure occurs, we will close the                 */
 					/* connection.                                       */
 					/*****************************************************/
-
-					print_fds( fds );
-					std::cout << "in while(true), i= " << i << ", fds[i].fd= " << fds[i].fd << ", fds.size()= " << fds.size() << std::endl;
-				//	std::cout << "address of buffer = " << &(my_serv.find_user(fds[i].fd)->buff) << std::endl;
-					std::cout << "address of user = " << (my_serv.find_user(fds[i].fd)) << std::endl;
 					memset(my_serv.find_user(fds[i].fd)->buff, 0, 80);
 					rc = recv(fds[i].fd, my_serv.find_user(fds[i].fd)->buff, sizeof(my_serv.find_user(fds[i].fd)->buff), 0);
 					std::cout << "{" << my_serv.find_user(fds[i].fd)->buff << "}" << std::endl;
@@ -274,7 +263,7 @@ int main ( int argc, char **argv )
 					/*****************************************************/
 					if (rc == 0)
 					{
-						printf("  Connection closed\n");
+						std::cout << "  Connection closed" << std::endl;
 						my_serv.quit(fds[i].fd);
 						close_conn = true;
 						break;
@@ -285,7 +274,7 @@ int main ( int argc, char **argv )
 					/* Parsing changes                                   */
 					/*****************************************************/
 					len = rc;
-					printf("  %d bytes received\n", len);
+					std::cout << "  " << len << " bytes received" << std::endl;
 					//parse instead of echo data to the client
 					if (my_serv.find_user(fds[i].fd)->set_command(my_serv.find_user(fds[i].fd)->buff))
 					{
@@ -324,9 +313,8 @@ int main ( int argc, char **argv )
 		
 		if (compress_array)
 		{
-			std::cout << " in compress array\n";
 			compress_array = false;
-			for (vector<struct pollfd>::iterator it = fds.begin(); it != fds.end(); ++it)
+			for (std::vector<struct pollfd>::iterator it = fds.begin(); it != fds.end(); ++it)
 			{
 				if (it->fd == -1)
 					fds.erase(it--);
@@ -338,19 +326,11 @@ int main ( int argc, char **argv )
 	/*************************************************************/
 	/* Clean up all of the sockets that are open                 */
 	/*************************************************************/
-	for (vector<struct pollfd>::iterator it = fds.begin(); it != fds.end(); it++)
+	for (std::vector<struct pollfd>::iterator it = fds.begin(); it != fds.end(); it++)
 	{
 		if ((*it).fd >= 0)
 			close((*it).fd);
 	}
 	fds.clear();
 	return 0;
-}
-
-void	print_fds( vector<struct pollfd>& fds ) {
-
-	std::cout << "vector fds: [";
-	for (vector<struct pollfd>::iterator it = fds.begin(); it != fds.end(); ++it)
-		std::cout << it->fd << " ";
-	std::cout << "]" << std::endl;
 }
