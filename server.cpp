@@ -70,14 +70,18 @@ int server::change_mode(int userFd, std::vector<std::string>& strings)
 }
 int server::invitation(int userFd, std::vector<std::string>& strings)
 {
+	std::string chan_name = strings[2];
+	std::string invited_user = strings[1];
 	if (!channel_exists(strings[2]))
 		return -1; //return rpl channel does not exists
-	user *invited = find_user(strings[1]);
+	user *invited = find_user(invited_user);
 	user *member = find_user(userFd);
 
-	std::string invited_msg(":" + member->get_nickname() + "!~" + member->get_username() + "@" + member->get_hostname() + " INVITE " + invited->get_nickname() + " :" + strings[2] + "\n");
+
+	invited->add_invitation(chan_name);
+	std::string invited_msg(":" + member->get_nickname() + "!~" + member->get_username() + "@" + member->get_hostname() + " INVITE " + invited->get_nickname() + " :" + chan_name + "\n");
 	send(invited->get_fd(), invited_msg.data(), invited_msg.length(), 0);
-	std::string member_msg(":" + member->get_nickname() + "!~" + member->get_username() + "@" + member->get_hostname() + RPL_INVITING + member->get_nickname() + " " + invited->get_nickname() + " " + strings[2] + "\n");
+	std::string member_msg(":" + member->get_nickname() + "!~" + member->get_username() + "@" + member->get_hostname() + RPL_INVITING + member->get_nickname() + " " + invited->get_nickname() + " " + chan_name + "\n");
 	send(member->get_fd(), member_msg.data(), member_msg.length(), 0);
 	return 0;
 }
@@ -225,9 +229,8 @@ int server::join_channel(int userFd, std::vector<std::string> &strings)
 		}
 		if (!find_channel(*it).member_exists(user_to_add->get_nickname()))
 		{
-			if (find_channel(*it).mode[INVITE_ONLY_MODE])
+			if (find_channel(*it).mode[INVITE_ONLY_MODE] && !user_to_add->is_invited(*it))
 			{
-				std::cout << "ALWAYS TO TRUE" << std::endl;
 				std::string rpl_msg = rpl_string(user_to_add, ERR_INVITEONLYCHAN, "Cannot join channel (+i)", *it);
 				send(userFd, rpl_msg.data(), rpl_msg.length(), 0);
 				return -1;

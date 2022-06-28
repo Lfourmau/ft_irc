@@ -1,5 +1,21 @@
 #include "user.hpp"
 
+bool user::is_invited(std::string chan_name)
+{
+	bool ret = false;
+	for (std::vector<std::string>::iterator it = this->invited.begin(); it != this->invited.end(); ++it)
+	{
+		if (chan_name == (*it))
+			ret = true;
+	}
+	return ret;
+}
+
+void user::add_invitation(std::string chan_name)
+{
+	this->invited.push_back(chan_name);
+}
+
 bool	is_valid_nickname(std::string& nick) {
 	std::string start_check = INVALID_STARTCHARS;
 
