@@ -33,6 +33,8 @@ int server::parsing(std::string toparse, int userFd)
 			send_privmsg(userFd, strings);
 		else if (!strings[0].compare("NOTICE"))
 			send_notice(userFd, strings);
+		else if (!strings[0].compare("TOPIC"))
+			topic(userFd, strings);
 		else if (!strings[0].compare("KICK"))
 			kick(userFd, strings);
 		else if (!strings[0].compare("MODE"))
@@ -52,6 +54,68 @@ int server::parsing(std::string toparse, int userFd)
 		return 1;
 	//printChannels();
 	return 0;
+}
+
+/*******************************************************/
+/* TOPIC STUFF        	                               */
+/*******************************************************/
+int server::topic(int userFd, std::vector<std::string>& strings)
+{
+	user *command_author = find_user(userFd);
+	if (!channel_exists(strings[1]))
+		return -1;
+	channel &chan = find_channel(strings[1]);
+
+	if (!chan.member_exists(command_author->get_nickname()))
+	{
+		std::string rpl_msg = rpl_string(command_author, ERR_NOTONCHANNEL, "You're not on that channel", chan.get_name());
+		send(userFd, rpl_msg.data(), rpl_msg.length(), 0);
+		return -1;
+	}
+	//user try to modify topic
+	if (strings.size() > 2)
+	{
+		//he needs privileges
+		if (!chan.is_operator(command_author->get_nickname()))
+		{	std::string rpl_msg = rpl_string(command_author, ERR_CHANOPRIVSNEEDED, "You're not channel operator", chan.get_name());
+			send(userFd, rpl_msg.data(), rpl_msg.length(), 0);
+			return -1;
+		}
+		else
+			set_topic(userFd, chan, strings);
+	}
+	else if (strings.size() == 2)
+	{
+		//user wants to check the topic
+		if (chan.get_topic() != "")
+		{
+			std::string rpl_msg = rpl_string(command_author, RPL_TOPIC, chan.get_topic().data(), chan.get_name());
+			send(userFd, rpl_msg.data(), rpl_msg.length(), 0);
+		}
+		else
+		{
+			std::string rpl_msg = rpl_string(command_author, RPL_NOTOPIC, "No topic is set", chan.get_name());
+			send(userFd, rpl_msg.data(), rpl_msg.length(), 0);
+		}
+	}
+	return 0;
+}
+
+void server::set_topic(int userFd, channel &chan, std::vector<std::string> strings)
+{
+	std::string new_topic;
+	user *modifier = find_user(userFd);
+
+	for (size_t i = 2; i < strings.size(); ++i)
+	{
+		new_topic.append(strings[i]);
+		if (i != strings.size() - 1)
+			new_topic.append(" ");
+	}
+	new_topic.append("\n");
+	chan.set_topic(new_topic);
+	std::string msg(":" + modifier->get_nickname() + "!~" + modifier->get_username() + "@" + modifier->get_hostname() + " TOPIC " + chan.get_name() + " " + new_topic + "\n");
+	chan.send_to_members(msg);
 }
 
 /*******************************************************/
