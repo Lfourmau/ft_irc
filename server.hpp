@@ -39,6 +39,7 @@ class server
 		int 				invitation(int userFd, std::vector<std::string>& strings);
 		int 				set_chan_modes(channel &chan, std::string modes);
 		int 				part(int userFd, std::vector<std::string>& strings);
+		int					list(int userFd, std::vector<std::string>& strings);
 		int					pong(int userFd, std::vector<std::string>& strings);
 		int 				quit(int userFd);
 		bool 				user_exists(int fd);

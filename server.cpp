@@ -39,6 +39,8 @@ int server::parsing(std::string toparse, int userFd)
 			invitation(userFd, strings);
 		else if (!strings[0].compare("PART"))
 			part(userFd, strings);
+		else if (!strings[0].compare("LIST"))
+			list(userFd, strings);
 		else if (!strings[0].compare("PING"))
 			pong(userFd, strings);
 		else if (!strings[0].compare("QUIT"))
@@ -202,6 +204,24 @@ int server::part(int userFd, std::vector<std::string>& strings)
 		chan_recipient.remove_member(leaver);
 		std::cout << "Part message -- > " << msg << std::endl;
 	}
+	return 0;
+}
+
+/*******************************************************/
+/* LIST STUFF        	                               */
+/*******************************************************/
+int	server::list(int userFd, std::vector<std::string>& strings)
+{
+	// if (strings.size() > 1) {
+	std::string rpl_msg = rpl_string(find_user(userFd), RPL_LISTSTART, "Channel: Users  Name");
+	send(userFd, rpl_msg.data(), rpl_msg.length(), 0);
+	for (size_t i = 0; i < channels.size(); i++)
+	{
+		std::string rpl_msg = rpl_string(find_user(userFd), RPL_LIST, "Channel: Users  Name");
+		send(userFd, rpl_msg.data(), rpl_msg.length(), 0);
+	}
+	
+	// }
 	return 0;
 }
 
