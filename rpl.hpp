@@ -27,6 +27,6 @@
 #define ERR_BADCHANNELKEY 		" 475 "
 #define ERR_CHANOPRIVSNEEDED 	" 482 "
 #define ERR_UMODEUNKNOWNFLAG	" 501 "
-#define	NOTICE					" NOTICE "
+#define	RPL_NOTICE				" NOTICE "
 
 #endif
