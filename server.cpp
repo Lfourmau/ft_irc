@@ -31,6 +31,8 @@ int server::parsing(std::string toparse, int userFd)
 			send_privmsg(userFd, strings);
 		else if (!strings[0].compare("KICK"))
 			kick(userFd, strings);
+		else if (!strings[0].compare("MODE"))
+			change_mode(userFd, strings);
 		else if (!strings[0].compare("PART"))
 			part(userFd, strings);
 		else if (!strings[0].compare("QUIT"))
@@ -44,6 +46,50 @@ int server::parsing(std::string toparse, int userFd)
 	return 0;
 }
 
+/*******************************************************/
+/* MODE STUFF        	                               */
+/*******************************************************/
+int server::change_mode(int userFd, std::vector<std::string>& strings)
+{
+	if (strings.size() == 3)
+	{
+		user *command_author = find_user(userFd);
+		if (!channel_exists(strings[1]))
+			return -1; //channel does not exists
+		channel &chan = find_channel(strings[1]);
+		if (!chan.is_operator(command_author->get_nickname()))
+			return -1; //not a chan operator
+		set_chan_modes(chan, strings[2]);
+		std::string msg(":" + command_author->get_nickname() + "!~" + command_author->get_username() + "@" + command_author->get_hostname() + " MODE " + chan.get_name() + " " + strings[2] + "\n");
+		chan.send_to_members(msg);
+	}
+	//else if (strings.size() == 4)
+	return 0;
+}
+void server::set_chan_modes(channel &chan, std::string modes)
+{
+	for (size_t i = 0; i < modes.size(); i++)
+	{
+		if (modes[0] == '+')
+		{
+			if (modes[i] == 'i')
+			{
+				chan.mode[INVITE_ONLY_MODE] = true;
+				std::cout << "SET TO TRUE" << std::endl;
+			}
+			else if (modes[i] == 'k')
+				chan.mode[KEY_MODE] = true;
+		}
+		if (modes[0] == '-')
+		{
+			if (modes[i] == 'i')
+				chan.mode[INVITE_ONLY_MODE] = false;
+			else if (modes[i] == 'k')
+				chan.mode[KEY_MODE] = false;
+		}
+	}
+	
+}
 /*******************************************************/
 /* QUIT STUFF        	                               */
 /*******************************************************/
@@ -158,9 +204,19 @@ int server::join_channel(int userFd, std::vector<std::string> &strings)
 			return -1;
 		}
 		if (!channel_exists(*it))
+		{
 			create_channel(*it, "fake_key");
+			find_channel(*it).add_operator(user_to_add);
+		}
 		if (!find_channel(*it).member_exists(user_to_add->get_nickname()))
 		{
+			if (find_channel(*it).mode[INVITE_ONLY_MODE])
+			{
+				std::cout << "ALWAYS TO TRUE" << std::endl;
+				std::string rpl_msg = rpl_string(user_to_add, ERR_INVITEONLYCHAN, "Cannot join channel (+i)", *it);
+				send(userFd, rpl_msg.data(), rpl_msg.length(), 0);
+				return -1;
+			}
 			find_channel(*it).add_member(user_to_add);
 			if (send_join_rpl(*it, userFd) < 0)
 				return -1;
