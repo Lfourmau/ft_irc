@@ -23,7 +23,7 @@ enum user_mode
 class user
 {
 	public:
-		user(int sock) : is_connected(0), fd(sock), command(), nickname("*") { memset(buff, 0, 80); };
+		user(int sock) : is_connected(0), invited(), fd(sock), command(), nickname("*") { memset(buff, 0, 80); };
 		~user() {};
 
 		channel *currentChan;
@@ -37,7 +37,8 @@ class user
 		std::string get_hostname() const;
 		user_mode 	get_mode() const;
 		void	 	get_mode(user_mode) const;
-	
+		bool 		is_invited(std::string chan_name);
+		void 		add_invitation(std::string chan_name);
 		int 		set_command(char *buff);
 		int 		set_nickname(std::vector<std::string> &strings, server& server);
 		void 		set_hostname(sockaddr_in &addr);
@@ -46,7 +47,8 @@ class user
 		int			send_nickname_notif(std::string msg, server &server);
 		int			check_nickname_validity(std::vector<std::string> &strings, server& server, std::string nick);
 
-		int 		is_connected;
+		int 						is_connected;
+		std::vector<std::string> 	invited;
 
 	private:
 		int fd;
