@@ -58,26 +58,50 @@ int server::change_user_mode(user *command_author, std::vector<std::string>& str
 	user* to_promote = find_user(strings[3]);
 	channel &chan = find_channel(strings[1]);
 	if (!to_promote || !chan.member_exists(to_promote->get_nickname()))
+	{
+		std::string rpl_msg = rpl_string(command_author, ERR_NOSUCHNICK, "No such nick", strings[1], strings[3]);
+		send(command_author->get_fd(), rpl_msg.data(), rpl_msg.length(), 0);
 		return -1;
+	}
 	if (!strings[2].compare("+o"))
 	{
 		chan.add_operator(to_promote);
 		std::string msg(":" + command_author->get_nickname() + "!~" + command_author->get_username() + "@" + command_author->get_hostname() + " MODE " + chan.get_name() + " " + strings[2] + " " + to_promote->get_nickname() + "\n");
 		chan.send_to_members(msg);
 	}
+	else
+	{
+		std::string rpl_msg = rpl_string(command_author, ERR_UMODEUNKNOWNFLAG, "Unknown MODE flag");
+		send(command_author->get_fd(), rpl_msg.data(), rpl_msg.length(), 0);
+		return -1;
+	}
 	return 0;
 }
 int server::change_mode(int userFd, std::vector<std::string>& strings)
 {
+	user *command_author = find_user(userFd);
+	if (!channel_exists(strings[1]))
+	{
+		std::string rpl_msg = rpl_string(command_author, ERR_NOSUCHCHANNEL, "No such channel", strings[1]);
+		send(userFd, rpl_msg.data(), rpl_msg.length(), 0);
+		return -1; //channel does not exists
+	}
+	channel &chan = find_channel(strings[1]);
+	if (!chan.is_operator(command_author->get_nickname()))
+	{
+		std::string rpl_msg = rpl_string(command_author, ERR_CHANOPRIVSNEEDED, "You're not channel operator", chan.get_name());
+		send(userFd, rpl_msg.data(), rpl_msg.length(), 0);
+		return -1; //not a chan operator
+	}
 	if (strings.size() == 3)
 	{
-		user *command_author = find_user(userFd);
-		if (!channel_exists(strings[1]))
-			return -1; //channel does not exists
-		channel &chan = find_channel(strings[1]);
-		if (!chan.is_operator(command_author->get_nickname()))
-			return -1; //not a chan operator
-		set_chan_modes(chan, strings[2]);
+		if (set_chan_modes(chan, strings[2]))
+		{
+			std::string rpl_msg = rpl_string(command_author, ERR_UMODEUNKNOWNFLAG, "Unknown MODE flag");
+			std::cout << "**" << rpl_msg << "**" << std::endl;
+			send(userFd, rpl_msg.data(), rpl_msg.length(), 0);
+			return -1;
+		}
 		std::string msg(":" + command_author->get_nickname() + "!~" + command_author->get_username() + "@" + command_author->get_hostname() + " MODE " + chan.get_name() + " " + strings[2] + "\n");
 		chan.send_to_members(msg);
 	}
@@ -102,17 +126,19 @@ int server::invitation(int userFd, std::vector<std::string>& strings)
 	send(member->get_fd(), member_msg.data(), member_msg.length(), 0);
 	return 0;
 }
-void server::set_chan_modes(channel &chan, std::string modes)
+int	server::set_chan_modes(channel &chan, std::string modes)
 {
+	for (size_t i = 1; i < modes.size(); i++)
+	{
+		if (modes[i] != 'i' && modes[i] != 'k')
+			return -1;
+	}
 	for (size_t i = 0; i < modes.size(); i++)
 	{
 		if (modes[0] == '+')
 		{
 			if (modes[i] == 'i')
-			{
 				chan.mode[INVITE_ONLY_MODE] = true;
-				std::cout << "SET TO TRUE" << std::endl;
-			}
 			else if (modes[i] == 'k')
 				chan.mode[KEY_MODE] = true;
 		}
@@ -124,8 +150,9 @@ void server::set_chan_modes(channel &chan, std::string modes)
 				chan.mode[KEY_MODE] = false;
 		}
 	}
-	
+	return 0;
 }
+
 /*******************************************************/
 /* QUIT STUFF        	                               */
 /*******************************************************/

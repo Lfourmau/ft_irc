@@ -37,7 +37,7 @@ class server
 		int 				change_mode(int userFd, std::vector<std::string>& strings);
 		int 				change_user_mode(user *client, std::vector<std::string>& strings);
 		int 				invitation(int userFd, std::vector<std::string>& strings);
-		void 				set_chan_modes(channel &chan, std::string modes);
+		int 				set_chan_modes(channel &chan, std::string modes);
 		int 				part(int userFd, std::vector<std::string>& strings);
 		int					pong(int userFd, std::vector<std::string>& strings);
 		int 				quit(int userFd);
