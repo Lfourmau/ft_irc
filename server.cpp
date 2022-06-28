@@ -294,7 +294,7 @@ int	server::list(int userFd, std::vector<std::string>& strings)
 	send(userFd, msg.data(), msg.length(), 0);
 	if (strings.size() > 2)
 	{
-		msg = rpl_string(lister, NOTICE, "Invalid parameters for /LIST");
+		msg = rpl_string(lister, RPL_NOTICE, "Invalid parameters for /LIST");
 		send(userFd, msg.data(), msg.length(), 0);
 	}
 	else
