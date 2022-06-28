@@ -33,6 +33,8 @@ int server::parsing(std::string toparse, int userFd)
 			kick(userFd, strings);
 		else if (!strings[0].compare("MODE"))
 			change_mode(userFd, strings);
+		else if (!strings[0].compare("INVITE"))
+			invitation(userFd, strings);
 		else if (!strings[0].compare("PART"))
 			part(userFd, strings);
 		else if (!strings[0].compare("QUIT"))
@@ -64,6 +66,19 @@ int server::change_mode(int userFd, std::vector<std::string>& strings)
 		chan.send_to_members(msg);
 	}
 	//else if (strings.size() == 4)
+	return 0;
+}
+int server::invitation(int userFd, std::vector<std::string>& strings)
+{
+	if (!channel_exists(strings[2]))
+		return -1; //return rpl channel does not exists
+	user *invited = find_user(strings[1]);
+	user *member = find_user(userFd);
+
+	std::string invited_msg(":" + member->get_nickname() + "!~" + member->get_username() + "@" + member->get_hostname() + " INVITE " + invited->get_nickname() + " :" + strings[2] + "\n");
+	send(invited->get_fd(), invited_msg.data(), invited_msg.length(), 0);
+	std::string member_msg(":" + member->get_nickname() + "!~" + member->get_username() + "@" + member->get_hostname() + RPL_INVITING + member->get_nickname() + " " + invited->get_nickname() + " " + strings[2] + "\n");
+	send(member->get_fd(), member_msg.data(), member_msg.length(), 0);
 	return 0;
 }
 void server::set_chan_modes(channel &chan, std::string modes)
@@ -298,6 +313,19 @@ user* server::find_user(int userFd)
 	for (std::vector<user*>::iterator it = this->users.begin(); it != this->users.end(); ++it)
 	{
 		if ((*it)->get_fd() == userFd)
+		{
+			ret = (*it);
+			break;
+		}
+	}
+	return (ret);
+}
+user* server::find_user(std::string nickname)
+{
+	user* ret = NULL;
+	for (std::vector<user*>::iterator it = this->users.begin(); it != this->users.end(); ++it)
+	{
+		if ((*it)->get_nickname() == nickname)
 		{
 			ret = (*it);
 			break;

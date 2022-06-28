@@ -35,6 +35,7 @@ class server
 		int 				join_channel(int userFd, std::vector<std::string> &strings);
 		int 				kick(int userFd, std::vector<std::string>& strings);
 		int 				change_mode(int userFd, std::vector<std::string>& strings);
+		int 				invitation(int userFd, std::vector<std::string>& strings);
 		void 				set_chan_modes(channel &chan, std::string modes);
 		int 				part(int userFd, std::vector<std::string>& strings);
 		int 				quit(int userFd);
@@ -43,6 +44,7 @@ class server
 		int					add_user(int fd, sockaddr_in &addr);
 		channel 			&find_channel(std::string name);
 		user 				*find_user(int userFd);
+		user 				*find_user(std::string nickname);
 		int					no_recipient_or_text(int userFd, std::vector<std::string> strings);
 		int 				send_privmsg(int userFd, std::vector<std::string> &cmd);
 		int 				send_message_to_channel(int userFd, std::string &recipient, std::string msg);
