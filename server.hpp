@@ -26,7 +26,7 @@ class channel;
 class server
 {
 	public:
-		server(std::string key = NULL) : password(key), ip("10.1.8.2") {};
+		server(int port, std::string key );
 		~server();
 
 		int 				parsing(std::string toparse, int userFd);
@@ -57,14 +57,16 @@ class server
 		std::vector<user*> 	&get_users();
 		std::vector<channel> 	&get_channels();
 		std::vector<std::string>	parsing_join_input(std::string& strings);
+		const int					&get_port() const;
+		const std::string			&get_password() const;
 
 	private:
-		//int port;
-		std::string password;
-		std::string ip;
+		int 					port;
+		std::string 			password;
+		std::string 			ip;
 		//int connected_users;
-		std::vector<channel> channels;
-		std::vector<user*> users;
+		std::vector<channel> 	channels;
+		std::vector<user*>		users;
 };
 
 #endif

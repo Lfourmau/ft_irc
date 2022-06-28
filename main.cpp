@@ -4,9 +4,10 @@
 #include <fcntl.h>
 
 #define SERVER_PORT  6667
+
 using namespace std;
 
-int main ()
+int main ( int argc, char **argv )
 {
 	int    len, rc, on = 1;
 	int    listen_sd = -1, new_sd = -1;
@@ -16,7 +17,18 @@ int main ()
 	vector<struct pollfd> fds;
 	int    timeout;
 
-	server my_serv("pass");
+	if (argc != 3) {
+		std::cerr << "Usage: ./ircserv <port> <password>" << std::endl;
+		exit(-1);
+	}
+
+	int server_port = parse_port(std::string(argv[1]));
+	if (server_port == INVALID_PORT_NUMBER) {
+		std::cerr << "Invalid port number" << std::endl;
+		exit(-1);
+	}
+
+	server my_serv(server_port, std::string(argv[2]));
 
 	/*************************************************************/
 	/* Create an AF_INET6 stream socket to receive incoming      */
@@ -56,14 +68,6 @@ int main ()
 	/*************************************************************/
 	/* Bind the socket                                           */
 	/*************************************************************/
-	/*
-	memset(&addr, 0, sizeof(addr));
-	addr.sin6_family = AF_INET6;
-	memcpy(&addr.sin6_addr, &in6addr_any, sizeof(in6addr_any));
-	addr.sin6_addr = INADDR_ANY;
-	addr.sin6_port = htons(SERVER_PORT);
-	rc = bind(listen_sd, (struct sockaddr *)&addr, sizeof(addr));
-	*/
 	addr.sin6_len = sizeof(addr);
 	addr.sin6_family = AF_INET6;
 	addr.sin6_flowinfo = 0;
@@ -118,7 +122,9 @@ int main ()
 		/***********************************************************/
 		/* Call poll() and wait 3 minutes for it to complete.      */
 		/***********************************************************/
-		printf("Waiting on poll()...\n");
+		std::cout << "Waiting on poll()... listening on port ";
+		std::cout << my_serv.get_port() << ", with key " << my_serv.get_password() << std::endl;
+
 		rc = poll(&fds[0], fds.size(), timeout);
 
 		/***********************************************************/

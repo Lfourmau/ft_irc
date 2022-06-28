@@ -1,5 +1,7 @@
 #include "server.hpp"
 
+server::server(int port, std::string key ) : port(port), password(key), ip("10.1.8.2") {} 
+
 server::~server()
 {
 	for (std::vector<user*>::iterator it = users.begin(); it != users.end(); ++it)
@@ -427,6 +429,8 @@ int server::remove_user(user *user_to_remove)
 std::string server::get_ip() { return this->ip; }
 std::vector<user*> &server::get_users() { return this->users; }
 std::vector<channel> &server::get_channels() { return this->channels; }
+const int					&server::get_port() const { return this->port; }
+const std::string			&server::get_password() const { return this->password; }
 
 
 /*******************************************************/
