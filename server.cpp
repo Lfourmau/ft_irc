@@ -518,8 +518,6 @@ int server::send_privmsg(int userFd, std::vector<std::string> &strings)
 }
 int server::send_notice(int userFd, std::vector<std::string> &strings)
 {
-	if (strings.size() < 3)
-		return -1; //not enough params
 	std::vector<std::string> recipients = split_string(strings[1], ',');
 	for (std::vector<std::string>::iterator it = recipients.begin(); it != recipients.end(); it++)
 	{
