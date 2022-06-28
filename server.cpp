@@ -55,7 +55,7 @@ int server::change_user_mode(user *command_author, std::vector<std::string>& str
 {
 	user* to_promote = find_user(strings[3]);
 	channel &chan = find_channel(strings[1]);
-	if (!chan.member_exists(to_promote->get_nickname()))
+	if (!to_promote || !chan.member_exists(to_promote->get_nickname()))
 		return -1;
 	if (!strings[2].compare("+o"))
 	{
