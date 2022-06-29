@@ -371,9 +371,8 @@ int	server::list(int userFd, std::vector<std::string>& strings)
 					ss << chan.members.size();
 					users = ss.str();
 					msg = prefix_user(lister, RPL_LIST) + " " + chan.get_name() + " " + users;
-					// if (!channels[i].get_topic().empty())
-					//  	msg += " :" + "TOPIC HERE";
-					// else
+					if (!chan.get_topic().empty())
+					 	msg += " :" + chan.get_topic();
 					msg += "\n";
 				}
 				else
@@ -385,17 +384,14 @@ int	server::list(int userFd, std::vector<std::string>& strings)
 		{
 			for (size_t i = 0; i < channels.size(); i++)
 			{
-				//NEED TO CHANGE TOPIC CHECK WHEN IMPLEMENTED (ideally a string topic on channel)
 				std::string users;
 				std::stringstream ss;
 				ss << channels[i].members.size();
 				users = ss.str();
 				msg = prefix_user(lister, RPL_LIST) + " " + channels[i].get_name() + " " + users;
-				// if (!channels[i].get_topic().empty())
-				//  	msg += " :" + "TOPIC HERE";
-				// else
+				if (!channels[i].get_topic().empty())
+				 	msg += " :" + channels[i].get_topic();
 				msg += "\n";
-				// std::string msg = prefix_user(command_author, RPL_CHANNELMODEIS) + " " + chan.get_name() + " " + chan.get_mode() + "\n";
 				send(userFd, msg.data(), msg.length(), 0);
 			}
 		}
