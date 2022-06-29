@@ -39,39 +39,38 @@ int server::parsing(std::string toparse, int userFd)
 		}
 		else
 		{
-		if (strings.empty())
-			return 0;
-		if (!strings[0].compare("JOIN"))
-			join_channel(userFd, strings);
-		else if (!strings[0].compare("NICK"))
-			find_user(userFd)->set_nickname(strings, *this);
-		else if (!strings[0].compare("USER"))
-			find_user(userFd)->my_register(strings);
-		else if (!strings[0].compare("PRIVMSG"))
-			send_privmsg(userFd, strings);
-		else if (!strings[0].compare("NOTICE"))
-			send_notice(userFd, strings);
-		else if (!strings[0].compare("TOPIC"))
-			topic(userFd, strings);
-		else if (!strings[0].compare("KICK"))
-			kick(userFd, strings);
-		else if (!strings[0].compare("MODE"))
-			change_mode(userFd, strings);
-		else if (!strings[0].compare("INVITE"))
-			invitation(userFd, strings);
-		else if (!strings[0].compare("PART"))
-			part(userFd, strings);
-		else if (!strings[0].compare("LIST"))
-			list(userFd, strings);
-		else if (!strings[0].compare("PING"))
-			pong(userFd, strings);
-		else if (!strings[0].compare("QUIT"))
-			return QUIT;
+			if (strings.empty())
+				return 0;
+			if (!strings[0].compare("JOIN"))
+				join_channel(userFd, strings);
+			else if (!strings[0].compare("NICK"))
+				find_user(userFd)->set_nickname(strings, *this);
+			else if (!strings[0].compare("USER"))
+				find_user(userFd)->my_register(strings);
+			else if (!strings[0].compare("PRIVMSG"))
+				send_privmsg(userFd, strings);
+			else if (!strings[0].compare("NOTICE"))
+				send_notice(userFd, strings);
+			else if (!strings[0].compare("TOPIC"))
+				topic(userFd, strings);
+			else if (!strings[0].compare("KICK"))
+				kick(userFd, strings);
+			else if (!strings[0].compare("MODE"))
+				change_mode(userFd, strings);
+			else if (!strings[0].compare("INVITE"))
+				invitation(userFd, strings);
+			else if (!strings[0].compare("PART"))
+				part(userFd, strings);
+			else if (!strings[0].compare("LIST"))
+				list(userFd, strings);
+			else if (!strings[0].compare("PING"))
+				pong(userFd, strings);
+			else if (!strings[0].compare("QUIT"))
+				return QUIT;
 		}
 		toparse.erase(toparse.begin(), toparse.begin() + sep + 2);
 		sep = toparse.find("\r\n", sep + 1);
 	}
-	//printChannels();
 	return 0;
 }
 
