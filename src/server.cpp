@@ -473,6 +473,20 @@ int server::join_channel(int userFd, std::vector<std::string> &strings)
 	user *user_to_add = find_user(userFd);
 	std::string set_creator_op_msg;
 
+	if (strings.size() == 2 && strings[1] == "0")
+	{
+		for (size_t i = 0; i < server::channels.size(); i++)
+		{
+			if (server::channels[i].member_exists(*user_to_add))
+			{
+				std::string msg(":" + user_to_add->get_nickname() + " PART " + server::channels[i].get_name() + "\n");
+				server::channels[i].send_to_members(msg);
+				server::channels[i].remove_member(user_to_add);
+				std::cout << "Part message -- > " << msg << std::endl;
+			}
+		}
+		return 0;
+	}
 	for (std::vector<std::string>::iterator it = channels.begin(); it != channels.end(); ++it)
 	{
 		if ((*it)[0] != '#')
