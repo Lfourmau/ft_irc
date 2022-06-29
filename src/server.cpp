@@ -34,7 +34,7 @@ int server::parsing(std::string toparse, int userFd)
 				find_user(userFd)->set_nickname(strings, *this);
 			else if (find_user(userFd)->knows_password && !strings[0].compare("USER"))
 				find_user(userFd)->my_register(strings);
-			else if (find_user(userFd)->knows_password && !strings[0].compare("QUIT"))
+			else if (!strings[0].compare("QUIT"))
 				return QUIT;
 			if (find_user(userFd) && send_welcome(userFd) < 0)
 				continue ;
