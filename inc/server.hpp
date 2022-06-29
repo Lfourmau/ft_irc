@@ -50,6 +50,7 @@ class server
 		int 				topic(int userFd, std::vector<std::string>& strings);
 		void				set_topic(int userFd, channel &chan, std::vector<std::string> strings);
 		int 				quit(int userFd);
+		int 				pass(int userFd, std::vector<std::string>& strings);
 		bool 				user_exists(int fd);
 		bool				user_exists(std::string name);
 		int					add_user(int fd, sockaddr_in &addr);
