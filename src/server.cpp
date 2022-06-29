@@ -219,7 +219,7 @@ int server::change_mode(int userFd, std::vector<std::string>& strings)
 	}
 	else if (strings.size() == 3) // MODE #chan +i
 	{
-		if (set_chan_modes(chan, strings[2]))
+		if (set_chan_modes(chan, strings[2]), NO_KEY_ARG)
 		{
 			std::string rpl_msg = rpl_string(command_author, ERR_UMODEUNKNOWNFLAG, "Unknown MODE flag");
 			std::cout << "**" << rpl_msg << "**" << std::endl;
@@ -229,9 +229,9 @@ int server::change_mode(int userFd, std::vector<std::string>& strings)
 		std::string msg(":" + command_author->get_nickname() + "!~" + command_author->get_username() + "@" + command_author->get_hostname() + " MODE " + chan.get_name() + " " + strings[2] + "\n");
 		chan.send_to_members(msg);
 	}
-	else if (strings.size() == 4 && strings[2] != "+k")
+	else if (strings.size() == 4 && strings[2] == "+o") // MODE #chan +ki pass --> shouldn't go there
 		change_user_mode(find_user(userFd), strings);
-	if (strings.size() >= 4 && strings[2] == "+k") // MODE #chan_name +k pass pass ...
+	if (strings.size() >= 4 && strings[2].find('k') != std::string::npos ) // MODE #chan_name +k pass pass ...
 	{
 		set_chan_modes(chan, strings[2]);
 		chan.set_key(strings[3]);
@@ -262,7 +262,7 @@ int server::invitation(int userFd, std::vector<std::string>& strings)
 	send(member->get_fd(), member_msg.data(), member_msg.length(), 0);
 	return 0;
 }
-int	server::set_chan_modes(channel &chan, std::string modes)
+int	server::set_chan_modes(channel &chan, std::string modes, bool ok_key_arg)
 {
 	for (size_t i = 1; i < modes.size(); i++)
 	{
@@ -275,7 +275,7 @@ int	server::set_chan_modes(channel &chan, std::string modes)
 		{
 			if (modes[i] == 'i')
 				chan.mode[INVITE_ONLY_MODE] = true;
-			else if (modes[i] == 'k')
+			else if (modes[i] == 'k' && ok_key_arg)
 				chan.mode[KEY_MODE] = true;
 		}
 		if (modes[0] == '-')
