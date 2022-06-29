@@ -131,5 +131,6 @@ bool		channel::is_operator(std::string nickname)
 	return false;
 }
 
-void channel::set_topic(std::string new_topic) { this->topic = new_topic; }
+void		channel::set_topic(std::string new_topic) { this->topic = new_topic; }
 std::string &channel::get_topic() { return this->topic; }
+void		channel::set_key(std::string new_key) { this->key = new_key; }

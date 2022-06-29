@@ -32,6 +32,7 @@ class channel
 		int 				add_operator(user *member);
 		void 				print_members();
 		void 				set_topic(std::string new_topic);
+		void				set_key(std::string new_key);
 		std::string			&get_topic();
 		std::vector<user*> 	members;
 		std::vector<user*> 	operators;
