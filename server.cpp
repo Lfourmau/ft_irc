@@ -110,17 +110,20 @@ void server::set_topic(int userFd, channel &chan, std::vector<std::string> strin
 	std::string new_topic;
 	user *modifier = find_user(userFd);
 
+	strings[2].erase(strings[2].begin());
+	new_topic.append(" "); //put a space before the new topic to handle multiple cases in on send at the end of the function (in the case of a null new_topic for exemple)
 	for (size_t i = 2; i < strings.size(); ++i)
 	{
 		new_topic.append(strings[i]);
 		if (i != strings.size() - 1)
 			new_topic.append(" ");
 	}
-	new_topic.append("\n");
-	if (!new_topic.compare("::\n"))
-		new_topic = "";
+	if (new_topic == " :")
+		new_topic.clear();
+	else
+		new_topic.append("\n");
 	chan.set_topic(new_topic);
-	std::string msg(":" + modifier->get_nickname() + "!~" + modifier->get_username() + "@" + modifier->get_hostname() + " TOPIC " + chan.get_name() + " " + new_topic + "\n");
+	std::string msg(":" + modifier->get_nickname() + "!~" + modifier->get_username() + "@" + modifier->get_hostname() + " TOPIC " + chan.get_name() + new_topic + "\n");
 	chan.send_to_members(msg);
 }
 
