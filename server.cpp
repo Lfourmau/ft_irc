@@ -17,12 +17,26 @@ int server::parsing(std::string toparse, int userFd)
 	std::cout << "Need to be parsed : " << toparse << "**" << std::endl;
 	while (sep != std::string::npos)
 	{
+
 		std::string cmd(toparse.begin(), toparse.begin() + sep);
 		std::vector<std::string> strings;
 		std::istringstream stream(cmd);
 		std::string word;
 		while (getline(stream, word, ' '))
 			strings.push_back(word);
+		if (!(find_user(userFd)->is_connected))
+		{
+			if (!strings[0].compare("NICK"))
+				find_user(userFd)->set_nickname(strings, *this);
+			else if (!strings[0].compare("USER"))
+				find_user(userFd)->my_register(strings);
+			else if (!strings[0].compare("QUIT"))
+				return QUIT;
+			if (find_user(userFd) && send_welcome(userFd) < 0)
+				continue ;
+		}
+		else
+		{
 		if (strings.empty())
 			return 0;
 		if (!strings[0].compare("JOIN"))
@@ -51,11 +65,10 @@ int server::parsing(std::string toparse, int userFd)
 			pong(userFd, strings);
 		else if (!strings[0].compare("QUIT"))
 			return QUIT;
+		}
 		toparse.erase(toparse.begin(), toparse.begin() + sep + 2);
-		sep = toparse.find("\r\n", sep + 2);
+		sep = toparse.find("\r\n", sep + 1);
 	}
-	if (find_user(userFd) && find_user(userFd)->is_connected == 0 && send_welcome(userFd) < 0)
-		return 1;
 	//printChannels();
 	return 0;
 }
@@ -719,7 +732,7 @@ int server::send_notice(int userFd, std::vector<std::string> &strings)
 int server::send_welcome(int userFd)
 {
 	user *new_user = find_user(userFd);
-	if (!new_user->get_nickname().empty() && !new_user->get_username().empty())
+	if (new_user->get_nickname() != "*" && new_user->get_username() != "*")
 	{
 		std::string welcome(":" + get_ip() + RPL_WELCOME + new_user->get_nickname() + " :Welcome to the Ctaleb, Ncatrien and Lfourmau network, " + new_user->get_nickname() + "!\n");
 		if (send(userFd, welcome.data(), welcome.length(), 0) < 0)
