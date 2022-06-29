@@ -544,6 +544,7 @@ int server::join_channel(int userFd, std::vector<std::string> &strings)
 			create_channel(chan_name, "fake_key");
 			find_channel(chan_name).add_operator(user_to_add);
 			set_creator_op_msg = ":" + user_to_add->get_nickname() + "!~" + user_to_add->get_username() + "@" + user_to_add->get_hostname() + " MODE " + chan_name + " +o " + user_to_add->get_nickname() + "\n";
+			std::cout << "created a channel" << std::cout;
 		}
 		if (!find_channel(chan_name).member_exists(user_to_add->get_nickname()))
 		{

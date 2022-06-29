@@ -1,23 +1,11 @@
-NAME		=	ircserv
-
-PORT		=	6667
-PASS		=	pizza
-
-BOT_PATH	=	bot/
+NAME		=	ircbot
 
 INC_DIR		=	inc
-INC			=	server.hpp		\
-				channel.hpp		\
-				user.hpp		\
-				rpl.hpp
+INC			=	bot.hpp
 INCS		=	$(addprefix $(INC_DIR)/, $(INC))
 
 SRC_DIR		=	src
-SRC			=	main.cpp			\
-				channel.cpp			\
-				user.cpp			\
-				server.cpp			\
-				string_maker.cpp
+SRC			=	main.cpp
 SRCS		=	$(addprefix $(SRC_DIR)/, $(SRC))
 
 OBJ_DIR		=	obj
@@ -39,22 +27,14 @@ all : $(NAME)
 $(NAME) : $(OBJS)
 	$(CXX) $(CXXFLAGS) -o ${NAME} $(OBJS)
 
-run : $(NAME)
-	./$(NAME) $(PORT) $(PASS)
-
-bot :
-	make -C $(BOT_PATH)
-
 clean : 
 	$(RM) $(RFLAGS) $(OBJS)
 	$(RM) $(RFLAGS) *.dSYM
 	$(RM) $(RFLAGS) $(OBJ_DIR)
-	make -C $(BOT_PATH) clean
 
 fclean : clean
 	$(RM) $(RFLAGS) $(NAME)
-	make -C $(BOT_PATH) fclean
 
 re : fclean all
 
-.PHONY : all clean fclean re run bot
+.PHONY : all clean fclean re run
