@@ -1,5 +1,10 @@
 #include "channel.hpp"
 
+channel::channel(std::string id, std::string password = "" ) : name(id), key(password), topic("") {
+	mode[INVITE_ONLY_MODE] = false;
+	mode[KEY_MODE] = false;
+};
+
 std::string	channel::get_mode() const
 {
 	std::string	ret = "+";
