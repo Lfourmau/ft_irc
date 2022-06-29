@@ -179,7 +179,7 @@ int server::change_mode(int userFd, std::vector<std::string>& strings)
 		std::string msg = prefix_user(command_author, RPL_CHANNELMODEIS) + " " + chan.get_name() + " " + chan.get_mode() + "\n";
 		send(userFd, msg.data(), msg.length(), 0);
 	}
-	else if (strings.size() == 3)
+	else if (strings.size() == 3) // MODE #chan +i
 	{
 		if (set_chan_modes(chan, strings[2]))
 		{
@@ -191,8 +191,13 @@ int server::change_mode(int userFd, std::vector<std::string>& strings)
 		std::string msg(":" + command_author->get_nickname() + "!~" + command_author->get_username() + "@" + command_author->get_hostname() + " MODE " + chan.get_name() + " " + strings[2] + "\n");
 		chan.send_to_members(msg);
 	}
-	else if (strings.size() == 4)
+	else if (strings.size() == 4 && strings[2] != "+k")
 		change_user_mode(find_user(userFd), strings);
+	if (strings.size() >= 4 && strings[2] == "+k")
+	{
+		chan.set_mode
+	}
+
 	return 0;
 }
 int server::invitation(int userFd, std::vector<std::string>& strings)
