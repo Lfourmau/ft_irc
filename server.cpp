@@ -67,9 +67,13 @@ int server::topic(int userFd, std::vector<std::string>& strings)
 {
 	user *command_author = find_user(userFd);
 	if (!channel_exists(strings[1]))
-		return -1;
-	channel &chan = find_channel(strings[1]);
+	{
+		std::string rpl_msg = rpl_string(command_author, ERR_NOSUCHCHANNEL, "No such channel", strings[1]);
+		send(userFd, rpl_msg.data(), rpl_msg.length(), 0);
+		return -1; //channel does not exists
+	}
 
+	channel &chan = find_channel(strings[1]);
 	if (!chan.member_exists(command_author->get_nickname()))
 	{
 		std::string rpl_msg = rpl_string(command_author, ERR_NOTONCHANNEL, "You're not on that channel", chan.get_name());
@@ -191,7 +195,11 @@ int server::invitation(int userFd, std::vector<std::string>& strings)
 	std::string chan_name = strings[2];
 	std::string invited_user = strings[1];
 	if (!channel_exists(strings[2]))
-		return -1; //return rpl channel does not exists
+	{
+		std::string rpl_msg = rpl_string(find_user(userFd), ERR_NOSUCHCHANNEL, "No such channel", chan_name);
+		send(userFd, rpl_msg.data(), rpl_msg.length(), 0);
+		return -1; //channel does not exists
+	}
 	user *invited = find_user(invited_user);
 	user *member = find_user(userFd);
 
@@ -399,7 +407,7 @@ int server::kick(int userFd, std::vector<std::string>& strings)
 	std::string chan_name = strings[1];
 	std::string nickname = strings[2];
 	std::string reason;
-	if (fin_and_send_kick_rpl(userFd, chan_name, nickname))
+	if (fin_and_send_kick_rpl(userFd, chan_name, nickname) < 0)
 		return -1;
 	channel &chan = find_channel(chan_name);
 	if (strings.size() >= 4)
