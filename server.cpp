@@ -452,7 +452,11 @@ int server::kick(int userFd, std::vector<std::string>& strings)
 int server::join_channel(int userFd, std::vector<std::string> &strings)
 {
 	std::vector<std::string> channels = split_string(strings[1], ',');
-	std::vector<std::string> passwords = split_string(strings[2], ',');
+	std::vector<std::string> passwords;
+	if (strings.size() >= 3) {
+		std::cerr << "passwords: " << strings[2] << std::endl;
+		passwords = split_string(strings[2], ',');
+	}
 	
 	user *user_to_add = find_user(userFd);
 	std::string set_creator_op_msg;
