@@ -1,40 +1,53 @@
-NAME = ircserv
+NAME		=	ircserv
 
-INC = 	server.hpp \
-		channel.hpp \
-		user.hpp	\
-		rpl.hpp
+PORT		=	6667
+PASS		=	pizza
 
-SRCS =  channel.cpp \
-		user.cpp \
-		server.cpp \
-		string_maker.cpp \
+INC_DIR		=	inc
+INC			=	server.hpp		\
+				channel.hpp		\
+				user.hpp		\
+				rpl.hpp
+INCS		=	$(addprefix $(INC_DIR)/, $(INC))
 
-OBJS = $(SRCS:.cpp=.o)
+SRC_DIR		=	src
+SRC			=	main.cpp			\
+				channel.cpp			\
+				user.cpp			\
+				server.cpp			\
+				string_maker.cpp
+SRCS		=	$(addprefix $(SRC_DIR)/, $(SRC))
 
+OBJ_DIR		=	obj
+OBJ			=	$(SRC:.cpp=.o)
+OBJS		=	$(addprefix $(OBJ_DIR)/, $(OBJ))
 
-CXXFLAGS = -Wall -Wextra -Werror -std=c++98 -g -fsanitize=address
-CXX = clang++
+CXX			=	clang++
+CXXFLAGS	=	-Wall -Wextra -Werror -std=c++98 -g -fsanitize=address
+
+RM			=	rm
+RFLAGS		=	-rf
+
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp $(INCS)
+	@mkdir -p $(OBJ_DIR)
+	$(CXX) $(CXXFLAGS) -o $@ -c $< -I $(INC_DIR)/
 
 all : $(NAME)
 
-
-%.o : %.cpp $(INC)
-	$(CXX) -c $(CXXFLAGS) $< -o $@
-
-$(NAME) : $(OBJS) main.cpp
-	$(CXX) $(CXXFLAGS) -o ${NAME} main.cpp $(OBJS)
+$(NAME) : $(OBJS)
+	$(CXX) $(CXXFLAGS) -o ${NAME} $(OBJS)
 
 run : $(NAME)
-	./$(NAME) 6667 pizza
+	./$(NAME) $(PORT) $(PASS)
 
 clean : 
-	rm -f $(OBJS)
-	$(RM) -r *.dSYM
+	$(RM) $(RFLAGS) $(OBJS)
+	$(RM) $(RFLAGS) *.dSYM
+	$(RM) $(RFLAGS) $(OBJ_DIR)
 
 fclean : clean
-	rm -f $(NAME)
+	$(RM) $(RFLAGS) $(NAME)
 
 re : fclean all
 
-.PHONY : all clean fclean re
+.PHONY : all clean fclean re run
