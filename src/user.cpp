@@ -120,7 +120,6 @@ void user::set_hostname(sockaddr_in &addr)
 	this->hostname = inet_ntoa(addr.sin_addr);
 	std::cout << this->hostname << std::endl;
 }
-void user::set_mode(user_mode mode_to_set) { this->mode = mode_to_set; }
 
 /*******************************************************/
 /* GETTERS 		                                       */
@@ -129,5 +128,4 @@ std::string user::get_username() const { return this->username; }
 std::string user::get_realname() const { return this->realname; }
 std::string user::get_nickname() const { return this->nickname; }
 std::string user::get_hostname() const { return this->hostname; }
-user_mode 	user::get_mode() const { return this->mode; }
 
