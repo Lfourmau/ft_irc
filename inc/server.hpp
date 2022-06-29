@@ -4,6 +4,7 @@
 # define QUIT (-1)
 #include <stdio.h>
 #include <vector>
+#include <stack>
 #include <iostream>
 #include <unistd.h>
 #include <stdlib.h>

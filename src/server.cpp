@@ -217,7 +217,7 @@ int server::change_mode(int userFd, std::vector<std::string>& strings)
 		std::string msg = prefix_user(command_author, RPL_CHANNELMODEIS) + " " + chan.get_name() + " " + chan.get_mode() + "\n";
 		send(userFd, msg.data(), msg.length(), 0);
 	}
-	else if (strings.size() == 3)
+	else if (strings.size() == 3) // MODE #chan +i
 	{
 		if (set_chan_modes(chan, strings[2]))
 		{
@@ -229,8 +229,16 @@ int server::change_mode(int userFd, std::vector<std::string>& strings)
 		std::string msg(":" + command_author->get_nickname() + "!~" + command_author->get_username() + "@" + command_author->get_hostname() + " MODE " + chan.get_name() + " " + strings[2] + "\n");
 		chan.send_to_members(msg);
 	}
-	else if (strings.size() == 4)
+	else if (strings.size() == 4 && strings[2] != "+k")
 		change_user_mode(find_user(userFd), strings);
+	if (strings.size() >= 4 && strings[2] == "+k") // MODE #chan_name +k pass pass ...
+	{
+		set_chan_modes(chan, strings[2]);
+		chan.set_key(strings[3]);
+		std::string msg(":" + command_author->get_nickname() + "!~" + command_author->get_username() + "@" + command_author->get_hostname() + " MODE " + chan.get_name() + " " + strings[2] + "\n");
+		chan.send_to_members(msg);
+	}
+
 	return 0;
 }
 int server::invitation(int userFd, std::vector<std::string>& strings)
@@ -469,6 +477,12 @@ int server::kick(int userFd, std::vector<std::string>& strings)
 int server::join_channel(int userFd, std::vector<std::string> &strings)
 {
 	std::vector<std::string> channels = split_string(strings[1], ',');
+	std::vector<std::string> passwords;
+	if (strings.size() >= 3) {
+		std::cerr << "passwords: " << strings[2] << std::endl;
+		passwords = split_string(strings[2], ',');
+	}
+	
 	user *user_to_add = find_user(userFd);
 	std::string set_creator_op_msg;
 
@@ -486,30 +500,58 @@ int server::join_channel(int userFd, std::vector<std::string> &strings)
 		}
 		return 0;
 	}
-	for (std::vector<std::string>::iterator it = channels.begin(); it != channels.end(); ++it)
+
+	std::stack<std::string, std::vector<std::string> > chan_stack;
+	std::stack<std::string, std::vector<std::string> > pass_stack;
+	for (std::vector<std::string>::reverse_iterator rit = channels.rbegin(); rit != channels.rend(); ++rit)
+		chan_stack.push(*rit);
+	for (std::vector<std::string>::reverse_iterator rit = passwords.rbegin(); rit != passwords.rend(); ++rit)
+		pass_stack.push(*rit);
+
+
+	while (!chan_stack.empty())
 	{
-		if ((*it)[0] != '#')
+		std::string chan_name = chan_stack.top();
+		chan_stack.pop();
+
+		std::string pass;
+		if (!pass_stack.empty()) {
+			pass = pass_stack.top();
+			pass_stack.pop();
+		} else {
+			pass = "";
+		}
+
+		if (chan_name[0] != '#')
 		{
-			std::string rpl_msg = rpl_string(user_to_add, ERR_NOSUCHCHANNEL, "No such channel", *it);
+			std::string rpl_msg = rpl_string(user_to_add, ERR_NOSUCHCHANNEL, "No such channel", chan_name);
 			send(userFd, rpl_msg.data(), rpl_msg.length(), 0);
 			return -1;
 		}
-		if (!channel_exists(*it))
+		if (!channel_exists(chan_name))
 		{
-			create_channel(*it, "fake_key");
-			find_channel(*it).add_operator(user_to_add);
-			set_creator_op_msg = ":" + user_to_add->get_nickname() + "!~" + user_to_add->get_username() + "@" + user_to_add->get_hostname() + " MODE " + *it + " +o " + user_to_add->get_nickname() + "\n";
+			// at channel creation, password is ignored
+			create_channel(chan_name, "fake_key");
+			find_channel(chan_name).add_operator(user_to_add);
+			set_creator_op_msg = ":" + user_to_add->get_nickname() + "!~" + user_to_add->get_username() + "@" + user_to_add->get_hostname() + " MODE " + chan_name + " +o " + user_to_add->get_nickname() + "\n";
 		}
-		if (!find_channel(*it).member_exists(user_to_add->get_nickname()))
+		if (!find_channel(chan_name).member_exists(user_to_add->get_nickname()))
 		{
-			if (find_channel(*it).mode[INVITE_ONLY_MODE] && !user_to_add->is_invited(*it))
+			// when mode (+ki), the password is always check first
+			if (find_channel(chan_name).mode[KEY_MODE] && pass != find_channel(chan_name).get_key() )
 			{
-				std::string rpl_msg = rpl_string(user_to_add, ERR_INVITEONLYCHAN, "Cannot join channel (+i)", *it);
+				std::string rpl_msg = rpl_string(user_to_add, ERR_BADCHANNELKEY, "Cannot join channel (+k) - bad key", chan_name);
 				send(userFd, rpl_msg.data(), rpl_msg.length(), 0);
 				return -1;
 			}
-			find_channel(*it).add_member(user_to_add);
-			if (send_join_rpl(*it, userFd) < 0)
+			if (find_channel(chan_name).mode[INVITE_ONLY_MODE] && !user_to_add->is_invited(chan_name))
+			{
+				std::string rpl_msg = rpl_string(user_to_add, ERR_INVITEONLYCHAN, "Cannot join channel (+i)", chan_name);
+				send(userFd, rpl_msg.data(), rpl_msg.length(), 0);
+				return -1;
+			}
+			find_channel(chan_name).add_member(user_to_add);
+			if (send_join_rpl(chan_name, userFd) < 0)
 				return -1;
 			if (!set_creator_op_msg.empty())
 				send(userFd, set_creator_op_msg.data(), set_creator_op_msg.length(), 0);	

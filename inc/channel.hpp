@@ -15,8 +15,8 @@ enum chan_mode
 class channel
 {
 	public:
-		channel(std::string id, std::string password = NULL) : name(id), key(password), topic("") {};
-		channel() : name("NULL") {};
+		channel(std::string id, std::string password);
+		//channel() : name("") {}; this constructor is never called??
 		~channel() {};
 		std::string const 	&get_name() const {return name;};
 		std::string const 	&get_key() const {return key;};
@@ -32,6 +32,7 @@ class channel
 		int 				add_operator(user *member);
 		void 				print_members();
 		void 				set_topic(std::string new_topic);
+		void				set_key(std::string new_key);
 		std::string			&get_topic();
 		std::vector<user*> 	members;
 		std::vector<user*> 	operators;
