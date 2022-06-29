@@ -41,7 +41,7 @@ int server::parsing(std::string toparse, int userFd)
 				std::string rpl_msg = rpl_string(find_user(userFd), ERR_NOTREGISTERED, "You need to send the PASS");
 				send(userFd, rpl_msg.data(), rpl_msg.length(), 0);
 			}
-			else
+			else if (strings[0].compare("CAP"))
 			{
 				std::string rpl_msg = rpl_string(find_user(userFd), ERR_NOTREGISTERED, "You have not registered");
 				send(userFd, rpl_msg.data(), rpl_msg.length(), 0);
