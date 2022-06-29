@@ -23,7 +23,7 @@ enum user_mode
 class user
 {
 	public:
-		user(int sock) : is_connected(0), invited(), fd(sock), command(), nickname("*") { memset(buff, 0, 80); };
+		user(int sock) : is_connected(0), invited(), fd(sock), command(), username("*"),realname("*"), nickname("*") { memset(buff, 0, 80); };
 		~user() {};
 
 		channel *currentChan;
