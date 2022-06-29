@@ -24,6 +24,8 @@ int server::parsing(std::string toparse, int userFd)
 		std::string word;
 		while (getline(stream, word, ' '))
 			strings.push_back(word);
+		if (strings.empty())
+			return 0;
 		if (!(find_user(userFd)->is_connected))
 		{
 			if (!strings[0].compare("PASS"))
@@ -39,8 +41,6 @@ int server::parsing(std::string toparse, int userFd)
 		}
 		else
 		{
-			if (strings.empty())
-				return 0;
 			if (!strings[0].compare("JOIN"))
 				join_channel(userFd, strings);
 			else if (!strings[0].compare("NICK"))
