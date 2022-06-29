@@ -26,11 +26,13 @@ int server::parsing(std::string toparse, int userFd)
 			strings.push_back(word);
 		if (!(find_user(userFd)->is_connected))
 		{
-			if (!strings[0].compare("NICK"))
+			if (!strings[0].compare("PASS"))
+				pass(userFd, strings);
+			else if (find_user(userFd)->knows_password && !strings[0].compare("NICK"))
 				find_user(userFd)->set_nickname(strings, *this);
-			else if (!strings[0].compare("USER"))
+			else if (find_user(userFd)->knows_password && !strings[0].compare("USER"))
 				find_user(userFd)->my_register(strings);
-			else if (!strings[0].compare("QUIT"))
+			else if (find_user(userFd)->knows_password && !strings[0].compare("QUIT"))
 				return QUIT;
 			if (find_user(userFd) && send_welcome(userFd) < 0)
 				continue ;
@@ -70,6 +72,30 @@ int server::parsing(std::string toparse, int userFd)
 		sep = toparse.find("\r\n", sep + 1);
 	}
 	//printChannels();
+	return 0;
+}
+
+/*******************************************************/
+/* PASS STUFF        	                               */
+/*******************************************************/
+int server::pass(int userFd, std::vector<std::string>& strings)
+{
+	std::cout << "PASSWORD ---> *" << strings[1] << "*" << std::endl;
+	user *user_to_connect = find_user(userFd);
+	if (user_to_connect->is_connected)
+	{
+		std::string rpl_msg = rpl_string(user_to_connect, ERR_ALREADYREGISTERED, "You may not register");
+		send(userFd, rpl_msg.data(), rpl_msg.length(), 0);
+		return -1;
+	}
+	if (!(strings[1] == (this->password)))
+	{
+		std::string rpl_msg = rpl_string(user_to_connect, ERR_PASSWDMISMATCH, "Password incorrect");
+		send(userFd, rpl_msg.data(), rpl_msg.length(), 0);
+		return -1;
+	}
+	if (strings[1] == this->password)
+		user_to_connect->knows_password = true;	
 	return 0;
 }
 
