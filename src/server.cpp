@@ -36,6 +36,16 @@ int server::parsing(std::string toparse, int userFd)
 				find_user(userFd)->my_register(strings);
 			else if (!strings[0].compare("QUIT"))
 				return QUIT;
+			else if (!find_user(userFd)->knows_password)
+			{
+				std::string rpl_msg = rpl_string(find_user(userFd), ERR_NOTREGISTERED, "You need to send the PASS");
+				send(userFd, rpl_msg.data(), rpl_msg.length(), 0);
+			}
+			else
+			{
+				std::string rpl_msg = rpl_string(find_user(userFd), ERR_NOTREGISTERED, "You have not registered");
+				send(userFd, rpl_msg.data(), rpl_msg.length(), 0);
+			}
 			if (find_user(userFd) && send_welcome(userFd) < 0)
 				continue ;
 		}
@@ -46,7 +56,10 @@ int server::parsing(std::string toparse, int userFd)
 			else if (!strings[0].compare("NICK"))
 				find_user(userFd)->set_nickname(strings, *this);
 			else if (!strings[0].compare("USER"))
-				find_user(userFd)->my_register(strings);
+			{
+				std::string rpl_msg = rpl_string(find_user(userFd), ERR_ALREADYREGISTERED, "You may not reregister");
+				send(userFd, rpl_msg.data(), rpl_msg.length(), 0);
+			}
 			else if (!strings[0].compare("PRIVMSG"))
 				send_privmsg(userFd, strings);
 			else if (!strings[0].compare("NOTICE"))
