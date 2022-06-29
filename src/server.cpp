@@ -69,7 +69,8 @@ int server::parsing(std::string toparse, int userFd)
 				return QUIT;
 		}
 		toparse.erase(toparse.begin(), toparse.begin() + sep + 2);
-		sep = toparse.find("\r\n", sep + 1);
+		std::cout << "NEw command begins by -> " << toparse.find("\r\n", sep + 1) << std::endl;
+		sep = toparse.find("\r\n", 0);
 	}
 	return 0;
 }
