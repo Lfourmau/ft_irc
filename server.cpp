@@ -708,7 +708,11 @@ int server::send_join_rpl(std::string channel_name, int userFd)
 	//send_rpl_namreply
 	std::string namreply(":" + get_ip() + RPL_NAMREPLY + new_user->get_nickname() + " = " + channel_name + " :");
 	for (std::vector<user*>::iterator it_user = chan.members.begin(); it_user != chan.members.end(); ++it_user)
+	{
+		if (chan.is_operator((*it_user)->get_nickname()))
+			namreply.append("@");
 		namreply.append((*it_user)->get_nickname() + " ");
+	}
 	namreply.append("\n");
 	std::cerr << "namreply: " << namreply << std::endl;
 	if (send(userFd, namreply.data(), namreply.length(), 0) < 0)
