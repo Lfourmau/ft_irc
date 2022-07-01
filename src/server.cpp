@@ -93,8 +93,14 @@ int server::parsing(std::string toparse, int userFd)
 /*******************************************************/
 int server::pass(int userFd, std::vector<std::string>& strings)
 {
-	std::cout << "PASSWORD ---> *" << strings[1] << "*" << std::endl;
 	user *user_to_connect = find_user(userFd);
+	if (strings.size() != 2)
+	{
+		std::string	rpl_msg = rpl_string(user_to_connect, ERR_NEEDMOREPARAMS, "Not enough parameters", "PASS");
+		send(userFd, rpl_msg.data(), rpl_msg.length(), 0);
+		return -1;
+	}
+	std::cout << "PASSWORD ---> *" << strings[1] << "*" << std::endl;
 	if (user_to_connect->is_connected)
 	{
 		std::string rpl_msg = rpl_string(user_to_connect, ERR_ALREADYREGISTERED, "You may not register");
